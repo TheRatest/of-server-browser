@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>styles/ManjaroMix.qss</file>
+        <file>styles/Aqua.qss</file>
+        <file>styles/Darkeum.qss</file>
+        <file>styles/Adaptic.qss</file>
+        <file>styles/Combinear.qss</file>
+        <file>styles/Fibers.qss</file>
+        <file>icon/icon.ico</file>
+        <file>icon/icon.png</file>
+        <file>icon/biglogo.png</file>
+    </qresource>
+</RCC>
