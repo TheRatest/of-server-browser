@@ -280,7 +280,7 @@ void QueryMaster::ReadPendingPackets() {
 			// fuck this type bs, im just gonna use auto :c
 			std::chrono::milliseconds timePing = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - pServer->m_timeQueryStart);
 			// love the readyRead signal delay !!
-			pServer->m_iLatencyMs = std::max((qint64)1, (timePing.count() - 15 - (timePing.count()/20)));
+            pServer->m_iLatencyMs = std::max((qint64)1, (qint64)(timePing.count() - 15 - (timePing.count()/20)));
 
 			bool bReadyBefore = pServer->m_bReady;
 			pServer->ParseInfoPacket(recvPacket);
