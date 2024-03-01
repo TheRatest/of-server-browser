@@ -3,9 +3,11 @@
 #include "rulesdialog.h"
 #include "optionsdialog.h"
 #include "infodialog.h"
+#include "QueryIPDialog.h"
 #include <QDesktopServices>
 #include <QPushButton>
 #include <QResizeEvent>
+#include <QClipboard>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -33,6 +35,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_Config.LoadConfig();
 	ApplyConfig();
+	for(auto it = m_Config.m_aiFavoritedServers.begin(); it != m_Config.m_aiFavoritedServers.end(); ++it) {
+		m_QueryMaster->MakeFavoriteFromAddr(it->first, it->second);
+	}
 
 	connect(pTable, SIGNAL(&QHeaderView::sectionResized), this, SLOT(&MainWindow::OnServerListSectionResized));
 }
@@ -43,14 +48,17 @@ void MainWindow::ApplyConfig() {
 	QCheckBox* pHideInsecure = this->findChild<QCheckBox*>("checkHideInsecure");
 	QCheckBox* pHidePassworded = this->findChild<QCheckBox*>("checkHidePassworded");
 	QCheckBox* pHideEmpty = this->findChild<QCheckBox*>("checkHideEmpty");
+	QCheckBox* pCheckOnlyFavorited = this->findChild<QCheckBox*>("checkFavoritedOnly");
 	QComboBox* pComboTags = this->findChild<QComboBox*>("comboTags");
 	QSpinBox* pSpinMaxLatency = this->findChild<QSpinBox*>("spinMaxLatency");
 	QSpinBox* pSpinGameVersion = this->findChild<QSpinBox*>("spinGameVersion");
 	QLineEdit* pInputMap = this->findChild<QLineEdit*>("inputMap");
 	QLineEdit* pInputTags = this->findChild<QLineEdit*>("inputTags");
+	QLineEdit* pInputName = this->findChild<QLineEdit*>("inputFilterName");
 	pHideEmpty->setCheckState(m_Config.m_bHideEmptyPlayers ? Qt::Checked : Qt::Unchecked);
 	pHideInsecure->setCheckState(m_Config.m_bHideNoVAC ? Qt::Checked : Qt::Unchecked);
 	pHidePassworded->setCheckState(m_Config.m_bHidePassworded ? Qt::Checked : Qt::Unchecked);
+	pCheckOnlyFavorited->setCheckState(m_Config.m_bDisplayOnlyFavorited ? Qt::Checked : Qt::Unchecked);
 
 	pCheckAutoRefresh->setCheckState(Qt::Unchecked);
 	if(m_Config.m_bAutoRefreshServers)
@@ -61,6 +69,7 @@ void MainWindow::ApplyConfig() {
 	pSpinGameVersion->setValue(m_Config.m_iGameVersion);
 	pInputMap->setText(m_Config.m_strFilterMap);
 	pInputTags->setText(m_Config.m_strFilterTags);
+	pInputName->setText(m_Config.m_strFilterHostname);
 
 	if(m_Config.m_iStyleIndex != 0 && !m_Config.m_strStyle.isEmpty() && m_Config.m_strStyle != "Default") {
 		OnStyleChanged(m_Config.m_strStyle);
@@ -89,14 +98,22 @@ void MainWindow::OnStyleChanged(QString& strStyleName) {
 	}
 
 	// bool bIsDarkTheme = strStyleName == "Darkeum" || strStyleName == "Combinear" || strStyleName == "ManjaroMix"  || strStyleName == "Adaptic";
-	QString strStylePath = ":/res/styles/";
-	strStylePath.append(strStyleName);
-	strStylePath.append(".qss");
-	QFile fileStyle(strStylePath);
-	fileStyle.open(QFile::ReadOnly);
-	QString strStyleSheet = QLatin1String(fileStyle.readAll());
-	fileStyle.close();
-	this->setStyleSheet(strStyleSheet);
+	if(strStyleName == "Custom") {
+		QFile fileStyle(m_Config.m_strStylePath);
+		fileStyle.open(QFile::ReadOnly);
+		QString strStyleSheet = QLatin1String(fileStyle.readAll());
+		fileStyle.close();
+		this->setStyleSheet(strStyleSheet);
+	} else {
+		QString strStylePath = ":/res/styles/";
+		strStylePath.append(strStyleName);
+		strStylePath.append(".qss");
+		QFile fileStyle(strStylePath);
+		fileStyle.open(QFile::ReadOnly);
+		QString strStyleSheet = QLatin1String(fileStyle.readAll());
+		fileStyle.close();
+		this->setStyleSheet(strStyleSheet);
+	}
 }
 
 void MainWindow::on_buttonViewRules_clicked()
@@ -154,8 +171,17 @@ void MainWindow::DisplayFilteredServers() {
 	pPlayersTable->clearSelection();
 	pPlayersTable->clearContents();
 	pPlayersTable->setRowCount(0);
-	for(int i = 0; i < m_QueryMaster->m_aReadyServers.size(); ++i) {
-		OnServerReady(m_QueryMaster->m_aReadyServers[i]);
+
+	QLabel* pServerListLabel = this->findChild<QLabel*>("labelServers");
+	QString strServerList = "Server list (";
+	strServerList.append(QString::number(pTable->rowCount()));
+	strServerList.append("/");
+	strServerList.append(QString::number(m_QueryMaster->m_aServers.size()));
+	strServerList.append(" total)");
+	pServerListLabel->setText(strServerList);
+	for(int i = 0; i < m_QueryMaster->m_aServers.size(); ++i) {
+		if(m_QueryMaster->m_aServers[i]->m_bReady)
+			OnServerReady(m_QueryMaster->m_aServers[i]);
 	}
 }
 
@@ -179,6 +205,21 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 
 	if(!pServer->m_strMap.contains(m_Config.m_strFilterMap) && !m_Config.m_strFilterMap.isEmpty())
 		return;
+
+	if(!pServer->m_strName.contains(m_Config.m_strFilterHostname) && m_Config.m_strFilterHostname.length() > 0)
+		return;
+
+	if(m_Config.m_bDisplayOnlyFavorited && !pServer->m_bFavorited) {
+		bool bFoundInFavorites = false;
+		for(int i = 0; i < m_Config.m_aiFavoritedServers.size(); ++i) {
+			if(pServer->m_hAddress.toIPv4Address() == m_Config.m_aiFavoritedServers[i].first && pServer->m_iPort == m_Config.m_aiFavoritedServers[i].second) {
+				bFoundInFavorites = true;
+				break;
+			}
+		}
+		if(!bFoundInFavorites)
+			return;
+	}
 
 	//QStringList astrServerTags = pServer->m_strTags.split(",");
 	for(int i = 0; i < astrFilterTags.size(); ++i) {
@@ -291,8 +332,9 @@ void MainWindow::on_buttonRefresh_clicked()
 	pTable->clearSelection();
 	pTable->clearContents();
 	pTable->setRowCount(0);
-	m_QueryMaster->ClearServerList();
+	//m_QueryMaster->ClearServerList();
 	m_QueryMaster->QueryMasterServer();
+	DisplayFilteredServers();
 }
 
 
@@ -408,14 +450,7 @@ void MainWindow::on_tableServers_itemSelectionChanged()
 		pTablePlayers->setItem(i, 2, pItemPlrDuration);
 	}
 
-	QString strURL;
-	if(m_Config.m_bUseSteamConnectme)
-		strURL = "https://connectsteam.me/?";
-	else
-		strURL = "steam://connect/";
-
-	strURL.append(pOutAddress->text());
-	pOutConnectURL->setText(strURL);
+	pOutConnectURL->setText(MakeConnectURL(pServer));
 	pButtonConnect->setEnabled(true);
 }
 
@@ -429,7 +464,24 @@ void MainWindow::on_tableServers_itemDoubleClicked(QTableWidgetItem *item)
 	}
 
 	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
-	m_QueryMaster->UpdateServer(iInternalServID);
+	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
+
+	/* 0 = Refresh
+	 * 1 = Connect
+	 * 2 = Favorite
+	 * 3 = Copy connect link
+	 */
+	if(m_Config.m_iDoubleClickAction == 0)
+		m_QueryMaster->UpdateServer(iInternalServID);
+	if(m_Config.m_iDoubleClickAction == 1) {
+		QDesktopServices::openUrl(MakeConnectURL(pServer));
+	}
+	if(m_Config.m_iDoubleClickAction == 2) {
+		on_actionBookmark_selected_server_triggered();
+	}
+	if(m_Config.m_iDoubleClickAction == 3) {
+		QGuiApplication::clipboard()->setText(MakeConnectURL(pServer));
+	}
 }
 
 void MainWindow::on_buttonQuickRefresh_clicked()
@@ -537,7 +589,14 @@ void MainWindow::on_actionRefresh_selected_server_triggered()
 		return;
 	}
 	QTableWidgetItem* pItem = pTable->selectedItems()[0];
-	on_tableServers_itemDoubleClicked(pItem);
+	// i was wondering why it wasnt working
+	// might've been because of this dumb as shit solution
+	// on_tableServers_itemDoubleClicked(pItem);
+
+	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
+	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
+
+	m_QueryMaster->UpdateServer(iInternalServID);
 }
 
 
@@ -576,3 +635,81 @@ void MainWindow::on_actionReset_config_triggered()
 	}
 }
 
+
+void MainWindow::on_actionBookmark_selected_server_triggered()
+{
+	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
+	if(pTable->selectedItems().size() < 1) {
+		pTable->clearSelection();
+		return;
+	}
+	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
+	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
+
+	for(auto it = m_Config.m_aiFavoritedServers.begin(); it != m_Config.m_aiFavoritedServers.end(); ++it) {
+		if(pServer->m_hAddress.toIPv4Address() == it->first && pServer->m_iPort == it->second) {
+			m_Config.m_aiFavoritedServers.erase(it);
+			pServer->m_bFavorited = false;
+			DisplayFilteredServers();
+			m_Config.SaveConfig();
+			return;
+		}
+	}
+
+	m_Config.m_aiFavoritedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iPort));
+	DisplayFilteredServers();
+	m_Config.SaveConfig();
+}
+
+void MainWindow::on_inputFilterName_textChanged(const QString &arg1)
+{
+	m_Config.m_strFilterHostname = arg1;
+	DisplayFilteredServers();
+	m_Config.SaveConfig();
+}
+
+
+void MainWindow::on_checkFavoritedOnly_stateChanged(int arg1)
+{
+	m_Config.m_bDisplayOnlyFavorited = arg1;
+	DisplayFilteredServers();
+	m_Config.SaveConfig();
+}
+
+
+void MainWindow::on_buttonQueryIP_clicked()
+{
+	QueryIPDialog* hQueryWnd = new QueryIPDialog(this);
+	hQueryWnd->exec();
+
+	delete hQueryWnd;
+}
+
+
+void MainWindow::on_actionCopy_connect_link_to_clipboard_triggered()
+{
+	QClipboard* hClipboard = QGuiApplication::clipboard();
+	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
+	if(pTable->selectedItems().size() < 1) {
+		pTable->clearSelection();
+		return;
+	}
+	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
+	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
+
+	hClipboard->setText(MakeConnectURL(pServer));
+}
+
+QString MainWindow::MakeConnectURL(ServerInfo* pServer) {
+	QString strURL;
+	if(m_Config.m_bUseSteamConnectme)
+		strURL = "https://connectsteam.me/?";
+	else
+		strURL = "steam://connect/";
+
+	strURL.append(pServer->m_hAddress.toString());
+	strURL.append(":");
+	strURL.append(QString::number(pServer->m_iPort));
+
+	return strURL;
+}

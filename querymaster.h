@@ -57,6 +57,7 @@ public:
 	std::vector<ServerPlayer> m_aPlayers;
 
 	qint32 m_iInternalID = 0;
+	bool m_bFavorited = false;
 
 	bool m_bReadyInfo = false;
 	bool m_bReadyPlayers = false;
@@ -100,8 +101,10 @@ public:
 	//void AddMissingReadyServers(std::vector<ServerInfo*>&);
 	void ClearServerList();
 
+	void MakeFavoriteFromAddr(quint32, quint16);
+	void QueryAddress(QHostAddress, quint16);
+
 	std::vector<ServerInfo*> m_aServers;
-	std::vector<ServerInfo*> m_aReadyServers;
 signals:
 	void ServerIsReady(ServerInfo*);
 	void ServerUpdated(ServerInfo*);

@@ -6,6 +6,7 @@
 #include "querymaster.h"
 #include "configmaster.h"
 #include <QTimer>
+#include <QSystemTrayIcon>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,6 +25,8 @@ public:
 	// public bc this needs to be accessed by the options dialog
 	QueryMaster* m_QueryMaster;
 	ConfigMaster m_Config;
+
+	QSystemTrayIcon m_tray;
 
 	void resizeEvent(QResizeEvent* pEvent);
 
@@ -78,10 +81,20 @@ private slots:
 
 	void on_actionReset_config_triggered();
 
+	void on_actionBookmark_selected_server_triggered();
+
+	void on_inputFilterName_textChanged(const QString &arg1);
+	void on_checkFavoritedOnly_stateChanged(int arg1);
+
+	void on_buttonQueryIP_clicked();
+
+	void on_actionCopy_connect_link_to_clipboard_triggered();
+
 private:
     Ui::MainWindow *ui;
 
 	QTimer timerAutoRefresh;
 	void DisplayFilteredServers();
+	QString MakeConnectURL(ServerInfo* pServer);
 };
 #endif // MAINWINDOW_H

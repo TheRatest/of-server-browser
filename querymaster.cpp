@@ -150,10 +150,10 @@ bool ServerInfo::QueueRulesPacket(QByteArray rawData) {
 
 	++m_iRulesPacketsReceived;
 
-	QByteArray pushPacket = rawData.begin()+iCursor;
+	QByteArray pushPacket;
 	pushPacket.resize(iPacketSize);
-	// why do i need to do this??
-	memcpy(pushPacket.begin(), rawData.begin()+iCursor, pushPacket.size());
+	// sigsegv my beloved
+	memcpy(pushPacket.begin(), rawData.begin()+iCursor, rawData.size()-iCursor);
 	m_aRulesPackets.push_back(std::make_pair(iPacketNum, pushPacket));
 
 	if(m_iRulesPacketsReceived == m_iRulesPacketsCount) {
@@ -280,7 +280,7 @@ void QueryMaster::ReadPendingPackets() {
 			// fuck this type bs, im just gonna use auto :c
 			std::chrono::milliseconds timePing = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - pServer->m_timeQueryStart);
 			// love the readyRead signal delay !!
-			pServer->m_iLatencyMs = std::max((qint64)1, (timePing.count() - 15 - (timePing.count()/20)));
+			pServer->m_iLatencyMs = std::max((qint64)1, (qint64)(timePing.count() - 15 - (timePing.count()/20)));
 
 			bool bReadyBefore = pServer->m_bReady;
 			pServer->ParseInfoPacket(recvPacket);
@@ -293,7 +293,7 @@ void QueryMaster::ReadPendingPackets() {
 			}
 
 			if(!bReadyBefore && pServer->m_bReady) {
-				m_aReadyServers.push_back(pServer);
+				//m_aReadyServers.push_back(pServer);
 				emit ServerIsReady(pServer);
 			}
 			else if(bReadyBefore)
@@ -308,7 +308,7 @@ void QueryMaster::ReadPendingPackets() {
 			bool bReadyBefore = pServer->m_bReady;
 			pServer->ParsePlayersPacket(recvPacket);
 			if(!bReadyBefore && pServer->m_bReady) {
-				m_aReadyServers.push_back(pServer);
+				//m_aReadyServers.push_back(pServer);
 				emit ServerIsReady(pServer);
 			}
 			else if(bReadyBefore)
@@ -323,7 +323,7 @@ void QueryMaster::ReadPendingPackets() {
 			bool bReadyBefore = pServer->m_bReady;
 			pServer->ParseRulesPacket(recvPacket);
 			if(!bReadyBefore && pServer->m_bReady) {
-				m_aReadyServers.push_back(pServer);
+				//m_aReadyServers.push_back(pServer);
 				emit ServerIsReady(pServer);
 			}
 			else if(bReadyBefore)
@@ -349,6 +349,10 @@ void QueryMaster::ReadPendingPackets() {
 				if(hAddrServer.toIPv4Address() == 0 && iPort == 0) {
 					m_bFinishedQueryingMaster = true;
 					break;
+				}
+
+				if(FindServerFromAddress(hAddrServer, iPort)) {
+					continue;
 				}
 
 				ServerInfo* pServer = new ServerInfo;
@@ -460,7 +464,7 @@ void QueryMaster::ClearServerList() {
 	}
 
 	m_aServers.clear();
-	m_aReadyServers.clear();
+	//m_aReadyServers.clear();
 	m_strSeed = "0.0.0.0:0";
 }
 
@@ -478,4 +482,37 @@ void QueryMaster::UpdateServers() {
 	for(auto it = m_aServers.begin(); it != m_aServers.end(); ++it) {
 		UpdateServer((*it)->m_iInternalID);
 	}
+}
+
+void QueryMaster::MakeFavoriteFromAddr(quint32 iAddr, quint16 iPort) {
+	ServerInfo* pServer = new ServerInfo;
+	pServer->m_hAddress = QHostAddress(iAddr);
+	pServer->m_iPort = iPort;
+	pServer->m_iInternalID = m_aServers.size();
+	pServer->m_timeQueryStart = std::chrono::system_clock::now();
+	pServer->m_bFavorited = true;
+
+	m_aServers.push_back(pServer);
+
+	SendInfoQuery(pServer);
+	SendPlayersQuery(pServer);
+}
+
+void QueryMaster::QueryAddress(QHostAddress hAddress, quint16 iPort) {
+	ServerInfo* pExistingServer = FindServerFromAddress(hAddress, iPort);
+
+	if(pExistingServer) {
+		UpdateServer(pExistingServer->m_iInternalID);
+		return;
+	}
+
+	ServerInfo* pServer = new ServerInfo;
+
+	pServer->m_hAddress = hAddress;
+	pServer->m_iPort = iPort;
+	pServer->m_iInternalID = m_aServers.size();
+	pServer->m_timeQueryStart = std::chrono::system_clock::now();
+	SendInfoQuery(pServer);
+
+	m_aServers.push_back(pServer);
 }

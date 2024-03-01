@@ -31,6 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         configmaster.h configmaster.cpp
         datareadwriter.h datareadwriter.cpp
         resources.qrc
+        queryipdialog.h queryipdialog.cpp queryipdialog.ui
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET of-server-browser APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

@@ -29,26 +29,46 @@ void ConfigMaster::LoadConfig() {
 	m_bHideEmptyPlayers = ReadInt8(rawData, iCursor);
 	m_bHideNoVAC = ReadInt8(rawData, iCursor);
 	m_bHidePassworded = ReadInt8(rawData, iCursor);
-	m_iMaxLatency = ReadInt32(rawData, iCursor);
-	m_iGameVersion = ReadInt32(rawData, iCursor);
+	m_iMaxLatency = ReadUInt32(rawData, iCursor);
+	m_iGameVersion = ReadUInt32(rawData, iCursor);
 	m_strFilterMap = ReadString(rawData, iCursor);
 	m_strFilterTags = ReadString(rawData, iCursor);
 	m_bExcludeTags = ReadInt8(rawData, iCursor);
 	m_bUseSteamConnectme = ReadInt8(rawData, iCursor);
 	m_bAutoRefreshServers = ReadInt8(rawData, iCursor);
 	m_flAutoRefreshInterval = ReadFloat(rawData, iCursor);
-	m_iStyleIndex = ReadInt8(rawData, iCursor);
+	m_iStyleIndex = ReadUInt8(rawData, iCursor);
 	m_strStyle = ReadString(rawData, iCursor);
 	if(m_iCfgVersion >= 2) {
-		m_iMainWindowWidth = ReadInt16(rawData, iCursor);
-		m_iMainWindowHeight = ReadInt16(rawData, iCursor);
-		m_iColumns = ReadInt8(rawData, iCursor);
+		m_iMainWindowWidth = ReadUInt16(rawData, iCursor);
+		m_iMainWindowHeight = ReadUInt16(rawData, iCursor);
+		m_iColumns = ReadUInt8(rawData, iCursor);
 		for(int i = 0; i < m_iColumns; ++i) {
-			m_aColumnSizes[i] = ReadInt16(rawData, iCursor);
+			m_aColumnSizes[i] = ReadUInt16(rawData, iCursor);
 		}
 	}
 	if(m_iCfgVersion >= 3) {
 		m_bCloseAfterConnect = ReadInt8(rawData, iCursor);
+	}
+	if(m_iCfgVersion >= 4) {
+		m_iDoubleClickAction = ReadUInt8(rawData, iCursor);
+		m_strStylePath = ReadString(rawData, iCursor);
+		m_bUseTray = ReadInt8(rawData, iCursor);
+		m_bEnableNotifications = ReadInt8(rawData, iCursor);
+		m_iNotificationCooldownMin = ReadUInt32(rawData, iCursor);
+		m_iNotificationPlayerThreshold = ReadUInt8(rawData, iCursor);
+
+		m_addrLastConnected = ReadUInt32(rawData, iCursor);
+		m_strLastConnectedName = ReadString(rawData, iCursor);
+		m_strFilterHostname = ReadString(rawData, iCursor);
+		m_bDisplayOnlyFavorited = ReadInt8(rawData, iCursor);
+		int iFavoritedServerCount = ReadUInt16(rawData, iCursor);
+		m_aiFavoritedServers.clear();
+		for(int i = 0; i < iFavoritedServerCount; ++i) {
+			quint32 iAddr = ReadUInt32(rawData, iCursor);
+			quint16 iPort = ReadUInt16(rawData, iCursor);
+			m_aiFavoritedServers.push_back(std::make_pair(iAddr, iPort));
+		}
 	}
 }
 
@@ -59,23 +79,39 @@ void ConfigMaster::SaveConfig() {
 	WriteInt8(rawData, m_bHideEmptyPlayers);
 	WriteInt8(rawData, m_bHideNoVAC);
 	WriteInt8(rawData, m_bHidePassworded);
-	WriteInt32(rawData, m_iMaxLatency);
-	WriteInt32(rawData, m_iGameVersion);
+	WriteUInt32(rawData, m_iMaxLatency);
+	WriteUInt32(rawData, m_iGameVersion);
 	WriteString(rawData, m_strFilterMap);
 	WriteString(rawData, m_strFilterTags);
 	WriteInt8(rawData, m_bExcludeTags);
 	WriteInt8(rawData, m_bUseSteamConnectme);
 	WriteInt8(rawData, m_bAutoRefreshServers);
 	WriteFloat(rawData, m_flAutoRefreshInterval);
-	WriteInt8(rawData, m_iStyleIndex);
+	WriteUInt8(rawData, m_iStyleIndex);
 	WriteString(rawData, m_strStyle);
-	WriteInt16(rawData, m_iMainWindowWidth);
-	WriteInt16(rawData, m_iMainWindowHeight);
-	WriteInt8(rawData, m_iColumns);
+	WriteUInt16(rawData, m_iMainWindowWidth);
+	WriteUInt16(rawData, m_iMainWindowHeight);
+	WriteUInt8(rawData, m_iColumns);
 	for(int i = 0; i < m_iColumns; ++i) {
-		WriteInt16(rawData, m_aColumnSizes[i]);
+		WriteUInt16(rawData, m_aColumnSizes[i]);
 	}
 	WriteInt8(rawData, m_bCloseAfterConnect);
+
+	WriteUInt8(rawData, m_iDoubleClickAction);
+	WriteString(rawData, m_strStylePath);
+	WriteInt8(rawData, m_bUseTray);
+	WriteInt8(rawData, m_bEnableNotifications);
+	WriteUInt32(rawData, m_iNotificationCooldownMin);
+	WriteUInt8(rawData, m_iNotificationPlayerThreshold);
+	WriteUInt32(rawData, m_addrLastConnected);
+	WriteString(rawData, m_strLastConnectedName);
+	WriteString(rawData, m_strFilterHostname);
+	WriteInt8(rawData, m_bDisplayOnlyFavorited);
+	WriteUInt16(rawData, m_aiFavoritedServers.size());
+	for(int i = 0; i < m_aiFavoritedServers.size(); ++i) {
+		WriteUInt32(rawData, m_aiFavoritedServers[i].first);
+		WriteUInt16(rawData, m_aiFavoritedServers[i].second);
+	}
 
 	fileCfg.open(QIODevice::WriteOnly);
 	fileCfg.write(rawData);

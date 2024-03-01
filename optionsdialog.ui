@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>300</width>
-    <height>150</height>
+    <height>230</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,7 +25,7 @@
   <property name="maximumSize">
    <size>
     <width>300</width>
-    <height>150</height>
+    <height>10000</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -42,7 +42,7 @@
    <property name="geometry">
     <rect>
      <x>90</x>
-     <y>120</y>
+     <y>200</y>
      <width>120</width>
      <height>24</height>
     </rect>
@@ -56,8 +56,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>305</width>
-     <height>111</height>
+     <width>301</width>
+     <height>191</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -76,16 +76,17 @@
     <property name="spacing">
      <number>3</number>
     </property>
-    <item row="0" column="0" colspan="2">
-     <widget class="QCheckBox" name="checkSteamconnect">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>25</height>
-       </size>
-      </property>
+    <item row="3" column="1">
+     <widget class="QPushButton" name="buttonBrowseStyle">
       <property name="text">
-       <string>Use https://steamconnect.me instead of steam://</string>
+       <string>Browse</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLineEdit" name="inputCustomStyle">
+      <property name="enabled">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -99,6 +100,49 @@
       </property>
       <property name="text">
        <string>Application theme</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QComboBox" name="comboDCAction">
+      <property name="minimumSize">
+       <size>
+        <width>100</width>
+        <height>0</height>
+       </size>
+      </property>
+      <item>
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Connect</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Favorite</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Copy link</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="labelRefresh">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Server auto refresh interval</string>
       </property>
      </widget>
     </item>
@@ -145,10 +189,28 @@
         <string>Darkeum</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>Custom</string>
+       </property>
+      </item>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="labelRefresh">
+    <item row="5" column="0">
+     <widget class="QLabel" name="labelDCAction">
+      <property name="minimumSize">
+       <size>
+        <width>180</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Server double click action</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkCloseAfterConnect">
       <property name="maximumSize">
        <size>
         <width>16777215</width>
@@ -156,7 +218,20 @@
        </size>
       </property>
       <property name="text">
-       <string>Server auto refresh interval</string>
+       <string>Close the app after using the &quot;Connect&quot; button</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkSteamconnect">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Use https://steamconnect.me instead of steam://</string>
       </property>
      </widget>
     </item>
@@ -179,8 +254,11 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0" colspan="2">
-     <widget class="QCheckBox" name="checkCloseAfterConnect">
+    <item row="6" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkTray">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="maximumSize">
        <size>
         <width>16777215</width>
@@ -188,7 +266,10 @@
        </size>
       </property>
       <property name="text">
-       <string>Close the app after using the &quot;Connect&quot; button</string>
+       <string>Minimize to system tray instead of closing (WIP)</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
       </property>
      </widget>
     </item>

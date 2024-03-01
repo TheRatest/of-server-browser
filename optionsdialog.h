@@ -25,6 +25,14 @@ private slots:
 
 	void on_checkCloseAfterConnect_stateChanged(int arg1);
 
+	void on_checkTray_stateChanged(int arg1);
+
+	void on_comboDCAction_currentIndexChanged(int index);
+
+	void on_buttonBrowseStyle_clicked();
+
+	void on_inputCustomStyle_textChanged(const QString &arg1);
+
 private:
 	Ui::OptionsDialog *ui;
 
