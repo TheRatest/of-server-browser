@@ -366,7 +366,7 @@
             <x>0</x>
             <y>0</y>
             <width>416</width>
-            <height>477</height>
+            <height>493</height>
            </rect>
           </property>
           <layout class="QFormLayout" name="formLayout">
@@ -1253,7 +1253,7 @@
           <locale language="English" country="UnitedStates"/>
          </property>
          <property name="text">
-          <string>Hide passworded servers</string>
+          <string>Hide passworded</string>
          </property>
         </widget>
        </item>
@@ -1551,7 +1551,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_Menu">
