@@ -15,6 +15,10 @@
 - Theme support
 - Hotkeys
 
+## Downloading / installing
+Go to [releases](https://github.com/TheRatest/of-server-browser/releases/) and get the newest version available, unpack it in an empty folder somewhere and then run of-server-browser.exe  
+There's currently no linux support because i bricked my linux install and i don't feel like trying out cross-compling
+
 ## Compiling
 Open the CMakeLists.txt file with Qt Creator and... build the app!
 
