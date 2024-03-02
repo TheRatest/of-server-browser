@@ -3,8 +3,10 @@
 
 ![preview](https://github.com/TheRatest/of-server-browser/blob/master/icon/preview.png)
 
-## Features (v1.1):
+## Features (v1.2):
 - Viewing all the public servers that your connection can reach
+- Caching servers
+- System tray icon/menu
 - Auto-refresh
 - Filters
 - Favoriting/bookmarking servers
@@ -12,6 +14,7 @@
 - Viewing the players (and sometimes the server convars)
 - Connecting to a server in a click of a button
 - Copying the link for connecting to a server
+- Reconnecting to the last server
 - Theme support
 - Hotkeys
 
@@ -27,6 +30,5 @@ Open the CMakeLists.txt file with Qt Creator and... build the app!
 - Logo: [Gump_Enjoyer](https://steamcommunity.com/profiles/76561198201233559)
 
 ## Planned features
-- System tray support
-- Notifications
-- Caching servers to be less reliant on Valve's master server
+- Notifications (idk if i wanna do this one though)
+- Linux releases
