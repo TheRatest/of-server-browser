@@ -3,7 +3,7 @@
 #include "rulesdialog.h"
 #include "optionsdialog.h"
 #include "infodialog.h"
-#include "QueryIPDialog.h"
+#include "queryipdialog.h"
 #include <QDesktopServices>
 #include <QPushButton>
 #include <QResizeEvent>
