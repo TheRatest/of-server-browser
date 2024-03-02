@@ -27,16 +27,30 @@ public:
 	ConfigMaster m_Config;
 
 	QSystemTrayIcon m_tray;
+	QMenu* m_menuTray;
+	QIcon* m_iconTray;
+	QAction* m_actTrayShow = nullptr;
+	QAction* m_actTrayReconnect = nullptr;
+	QAction* m_actTrayToggleNotifications = nullptr;
+	QAction* m_actTrayOptions = nullptr;
+	QAction* m_actTrayInfo = nullptr;
+	QAction* m_actTrayQuit = nullptr;
 
 	void resizeEvent(QResizeEvent* pEvent);
+	void closeEvent(QCloseEvent * pEvent);
 
 	void ApplyConfig();
 public slots:
 	void OnServerReady(ServerInfo*);
 	void OnServerUpdated(ServerInfo*);
+	void OnServerNeedsRemoval(ServerInfo*);
 	void OnStyleChanged(QString&);
 	void OnServerListSectionResized(int, int, int);
 private slots:
+	void OnTrayIconActivated(QSystemTrayIcon::ActivationReason);
+	void OnActionShowTriggered();
+	void OnActionToggleNotificationsTriggered();
+	void OnActionQuitTriggered();
 
     void on_buttonViewRules_clicked();
 
@@ -90,11 +104,18 @@ private slots:
 
 	void on_actionCopy_connect_link_to_clipboard_triggered();
 
+	void on_actionConnect_triggered();
+
+	void on_actionReconnectLast_triggered();
+	void on_actionClear_cache_triggered();
+
 private:
     Ui::MainWindow *ui;
 
 	QTimer timerAutoRefresh;
 	void DisplayFilteredServers();
-	QString MakeConnectURL(ServerInfo* pServer);
+	void ConnectToSelectedServer();
+	void UpdateReconnectActions();
+	QString MakeConnectURL(ServerInfo* pServer, bool bSteamURLOnly = false);
 };
 #endif // MAINWINDOW_H

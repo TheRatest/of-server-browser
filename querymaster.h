@@ -58,6 +58,8 @@ public:
 
 	qint32 m_iInternalID = 0;
 	bool m_bFavorited = false;
+	bool m_bCached = false;
+	bool m_bBogusServer = false;
 
 	bool m_bReadyInfo = false;
 	bool m_bReadyPlayers = false;
@@ -96,34 +98,40 @@ public:
 	void QueryMasterServer();
 	void UpdateServers();
 	void UpdateServer(int);
-	//std::vector<ServerInfo*> GetServers();
-	//std::vector<ServerInfo*> GetReadyServers();
-	//void AddMissingReadyServers(std::vector<ServerInfo*>&);
+	void RemoveServer(int);
 	void ClearServerList();
 
-	void MakeFavoriteFromAddr(quint32, quint16);
+	void LoadCachedServer(std::pair<quint32, quint16>);
+	void MakeFavoriteFromAddr(std::pair<quint32, quint16>);
 	void QueryAddress(QHostAddress, quint16);
+	ServerInfo* FindServerFromAddress(QHostAddress hAddr, quint16 iPort);
 
 	std::vector<ServerInfo*> m_aServers;
 signals:
 	void ServerIsReady(ServerInfo*);
 	void ServerUpdated(ServerInfo*);
+	void ServerNeedsRemoval(ServerInfo*);
 public slots:
 	void ReadPendingPackets();
+	void CheckForTimeouts();
 private:
 	// if the server list comes in multiple packets
 	QString m_strSeed = "0.0.0.0:0";
-	ServerInfo* FindServerFromAddress(QHostAddress hAddr, quint16 iPort);
 	void SendInfoQuery(ServerInfo* pServer);
 	void SendPlayersQuery(ServerInfo* pServer);
 	void SendRulesQuery(ServerInfo* pServer);
 	void SendRulesQuery(ServerInfo* pServer, int iChallenge);
 	void SendInfoQuery(ServerInfo* pServer, int iChallenge);
 	void SendPlayersQuery(ServerInfo* pServer, int iChallenge);
-	QHostAddress m_hMasterAddress = QHostInfo::fromName(HL2MASTER_HOST).addresses()[0];
+	QList<QHostAddress> m_aStoredMasterAddresses = QHostInfo::fromName(HL2MASTER_HOST).addresses();
+	quint16 m_iStoredAddressesIndex = 0;
+	QHostAddress m_hMasterAddress;
 	QUdpSocket* m_hSocket;
+	const quint32 m_iTimeoutThresholdMs = 600;
 
 	bool m_bFinishedQueryingMaster = true;
+	// to decide which servers are faulty
+	bool m_bReceivedMasterPacket = true;
 
 	// for debugging purposes so that i dont get rate limited by the valve servers
 	const bool m_bLocalOnly = false;

@@ -13,10 +13,11 @@ OptionsDialog::OptionsDialog(QWidget *parent)
 
 	QCheckBox* pCheckUseSteamconnect = this->findChild<QCheckBox*>("checkSteamconnect");
 	QCheckBox* pCheckCloseAfterConnect = this->findChild<QCheckBox*>("checkCloseAfterConnect");
+	QCheckBox* pCheckEnableCaching = this->findChild<QCheckBox*>("checkEnableCache");
+	QCheckBox* pCheckTray = this->findChild<QCheckBox*>("checkTray");
 	QDoubleSpinBox* pSpinInterval = this->findChild<QDoubleSpinBox*>("spinRefreshInterval");
 	QComboBox* pComboStyle = this->findChild<QComboBox*>("comboStyle");
 	QLineEdit* pInputCustomStyle = this->findChild<QLineEdit*>("inputCustomStyle");
-	QCheckBox* pCheckTray = this->findChild<QCheckBox*>("checkTray");
 	QComboBox* pComboDCAction = this->findChild<QComboBox*>("comboDCAction");
 	QPushButton* pButtonBrowseStyle = this->findChild<QPushButton*>("buttonBrowseStyle");
 
@@ -26,6 +27,7 @@ OptionsDialog::OptionsDialog(QWidget *parent)
 	pInputCustomStyle->setText(m_Config->m_strStylePath);
 	pCheckCloseAfterConnect->setCheckState(m_Config->m_bCloseAfterConnect ? Qt::Checked : Qt::Unchecked);
 	pCheckTray->setCheckState(m_Config->m_bUseTray ? Qt::Checked : Qt::Unchecked);
+	pCheckEnableCaching->setCheckState(m_Config->m_bEnableCaching ? Qt::Checked : Qt::Unchecked);
 	pComboDCAction->setCurrentIndex(m_Config->m_iDoubleClickAction);
 
 	if(m_Config->m_strStyle != "Custom") {
@@ -82,6 +84,8 @@ void OptionsDialog::on_checkTray_stateChanged(int arg1)
 {
 	m_Config->m_bUseTray = arg1;
 	m_Config->SaveConfig();
+
+	((MainWindow*)parent())->m_tray.setVisible(arg1);
 }
 
 
@@ -107,6 +111,13 @@ void OptionsDialog::on_inputCustomStyle_textChanged(const QString &arg1)
 {
 	m_Config->m_strStylePath = arg1;
 	((MainWindow*)parent())->OnStyleChanged(m_Config->m_strStyle);
+	m_Config->SaveConfig();
+}
+
+
+void OptionsDialog::on_checkEnableCache_stateChanged(int arg1)
+{
+	m_Config->m_bEnableCaching = arg1;
 	m_Config->SaveConfig();
 }
 

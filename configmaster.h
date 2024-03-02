@@ -14,7 +14,7 @@ class ConfigMaster : private DataReadWriter
 public:
 	ConfigMaster();
 
-	const char m_iNewestCfgVersion = 4;
+	const char m_iNewestCfgVersion = 5;
 	const QString m_strConfigFile = "config.cfg";
 
 	qint8 m_iCfgVersion = 0;
@@ -24,7 +24,7 @@ public:
 	int m_iMaxLatency = 0;
 	int m_iGameVersion = 0;
 	QString m_strFilterMap = "";
-	QString m_strFilterTags = {};
+	QString m_strFilterTags = "";
 	bool m_bExcludeTags = false;
 	bool m_bUseSteamConnectme = false;
 	bool m_bAutoRefreshServers = true;
@@ -43,13 +43,17 @@ public:
 	bool m_bEnableNotifications = false;
 	quint32 m_iNotificationCooldownMin = 30;
 	quint8 m_iNotificationPlayerThreshold = 3;
+	quint32 m_iLastConnectedAddr = 0;
+	quint16 m_iLastConnectedPort = 0;
+	QString m_strLastConnectedName = "None";
 	QString m_strFilterHostname = "";
 	bool m_bDisplayOnlyFavorited = false;
 	quint16 m_iFavoritedServerCount = 0;
-	std::vector<std::pair<quint32, quint16>> m_aiFavoritedServers = {};
+	std::vector<std::pair<quint32, quint16>> m_aFavoritedServers = {};
 
-	quint32 m_addrLastConnected = 0;
-	QString m_strLastConnectedName = "None";
+	bool m_bEnableCaching = true;
+	quint16 m_iCachedServerCount = 0;
+	std::vector<std::pair<quint32, quint16>> m_aCachedServers = {};
 
 	void SaveConfig();
 	void LoadConfig();

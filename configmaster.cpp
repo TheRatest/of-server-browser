@@ -57,17 +57,26 @@ void ConfigMaster::LoadConfig() {
 		m_bEnableNotifications = ReadInt8(rawData, iCursor);
 		m_iNotificationCooldownMin = ReadUInt32(rawData, iCursor);
 		m_iNotificationPlayerThreshold = ReadUInt8(rawData, iCursor);
-
-		m_addrLastConnected = ReadUInt32(rawData, iCursor);
+		m_iLastConnectedAddr = ReadUInt32(rawData, iCursor);
+		m_iLastConnectedPort = ReadUInt16(rawData, iCursor);
 		m_strLastConnectedName = ReadString(rawData, iCursor);
 		m_strFilterHostname = ReadString(rawData, iCursor);
 		m_bDisplayOnlyFavorited = ReadInt8(rawData, iCursor);
 		int iFavoritedServerCount = ReadUInt16(rawData, iCursor);
-		m_aiFavoritedServers.clear();
+		m_aFavoritedServers.clear();
 		for(int i = 0; i < iFavoritedServerCount; ++i) {
 			quint32 iAddr = ReadUInt32(rawData, iCursor);
 			quint16 iPort = ReadUInt16(rawData, iCursor);
-			m_aiFavoritedServers.push_back(std::make_pair(iAddr, iPort));
+			m_aFavoritedServers.push_back(std::make_pair(iAddr, iPort));
+		}
+	}
+	if(m_iCfgVersion >= 5) {
+		m_bEnableCaching = ReadInt8(rawData, iCursor);
+		m_iCachedServerCount = ReadUInt16(rawData, iCursor);
+		for(int i = 0; i < m_iCachedServerCount; ++i) {
+			quint32 iAddr = ReadUInt32(rawData, iCursor);
+			quint16 iPort = ReadUInt16(rawData, iCursor);
+			m_aCachedServers.push_back(std::make_pair(iAddr, iPort));
 		}
 	}
 }
@@ -103,14 +112,21 @@ void ConfigMaster::SaveConfig() {
 	WriteInt8(rawData, m_bEnableNotifications);
 	WriteUInt32(rawData, m_iNotificationCooldownMin);
 	WriteUInt8(rawData, m_iNotificationPlayerThreshold);
-	WriteUInt32(rawData, m_addrLastConnected);
+	WriteUInt32(rawData, m_iLastConnectedAddr);
+	WriteUInt16(rawData, m_iLastConnectedPort);
 	WriteString(rawData, m_strLastConnectedName);
 	WriteString(rawData, m_strFilterHostname);
 	WriteInt8(rawData, m_bDisplayOnlyFavorited);
-	WriteUInt16(rawData, m_aiFavoritedServers.size());
-	for(int i = 0; i < m_aiFavoritedServers.size(); ++i) {
-		WriteUInt32(rawData, m_aiFavoritedServers[i].first);
-		WriteUInt16(rawData, m_aiFavoritedServers[i].second);
+	WriteUInt16(rawData, m_aFavoritedServers.size());
+	for(int i = 0; i < m_aFavoritedServers.size(); ++i) {
+		WriteUInt32(rawData, m_aFavoritedServers[i].first);
+		WriteUInt16(rawData, m_aFavoritedServers[i].second);
+	}
+	WriteInt8(rawData, m_bEnableCaching);
+	WriteUInt16(rawData, m_aCachedServers.size());
+	for(int i = 0; i < m_aCachedServers.size(); ++i) {
+		WriteUInt32(rawData, m_aCachedServers[i].first);
+		WriteUInt16(rawData, m_aCachedServers[i].second);
 	}
 
 	fileCfg.open(QIODevice::WriteOnly);

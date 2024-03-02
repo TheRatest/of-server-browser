@@ -260,7 +260,7 @@
     <rect>
      <x>10</x>
      <y>185</y>
-     <width>100</width>
+     <width>191</width>
      <height>35</height>
     </rect>
    </property>
@@ -270,7 +270,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Version: 1.1</string>
+    <string>Version: 1.2 (pre-final)</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">

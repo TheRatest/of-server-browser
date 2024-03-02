@@ -33,6 +33,8 @@ private slots:
 
 	void on_inputCustomStyle_textChanged(const QString &arg1);
 
+	void on_checkEnableCache_stateChanged(int arg1);
+
 private:
 	Ui::OptionsDialog *ui;
 

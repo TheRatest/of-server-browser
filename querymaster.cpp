@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <QHostInfo>
+#include <QRandomGenerator>
 //#include "mainwindow.h"
 
 QString ServerPlayer::DurationString() {
@@ -176,6 +177,7 @@ QueryMaster::QueryMaster(QObject* pParent) {
 	m_hSocket = new QUdpSocket(this);
 	connect(m_hSocket, &QUdpSocket::readyRead, this, &QueryMaster::ReadPendingPackets);
 	m_hSocket->bind(m_hMasterAddress, HL2MASTER_PORT);
+	qDebug() << "Total master servers: " << m_aStoredMasterAddresses.size();
 }
 
 void QueryMaster::QueryMasterServer() {
@@ -184,6 +186,9 @@ void QueryMaster::QueryMasterServer() {
 		return;
 	}
 
+	m_hMasterAddress = m_aStoredMasterAddresses[m_iStoredAddressesIndex];
+
+	m_bReceivedMasterPacket = false;
 	m_bFinishedQueryingMaster = false;
 	QByteArray sendPacket;
 	sendPacket.append("\x31\xFF"); //memcpy(sendPacket.begin(), "\x31\xFF", 2);
@@ -196,7 +201,10 @@ void QueryMaster::QueryMasterServer() {
 	if(iBytesSent < 0) {
 		qDebug() << m_hSocket->error();
 		qDebug() << m_hSocket->errorString();
+	} else {
+		qDebug() << "Querying master server";
 	}
+	QTimer::singleShot(m_iTimeoutThresholdMs, this, &QueryMaster::CheckForTimeouts);
 }
 
 void QueryMaster::QueryLocalServer() {
@@ -280,15 +288,22 @@ void QueryMaster::ReadPendingPackets() {
 			// fuck this type bs, im just gonna use auto :c
 			std::chrono::milliseconds timePing = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - pServer->m_timeQueryStart);
 			// love the readyRead signal delay !!
-			pServer->m_iLatencyMs = std::max((qint64)1, (qint64)(timePing.count() - 15 - (timePing.count()/20)));
+			// setting the latency to the mean of the last value and the new one for a more stable value
+			pServer->m_iLatencyMs = (pServer->m_iLatencyMs + std::max((qint64)1, (qint64)(timePing.count() - 15 - (timePing.count()/20)))) / 2;
 
 			bool bReadyBefore = pServer->m_bReady;
 			pServer->ParseInfoPacket(recvPacket);
+			pServer->m_bBogusServer = !pServer->IsOpenFortressServer();
 
-			// fuck you valve
-			if(!pServer->IsOpenFortressServer()) {
-				ClearServerList();
-				QTimer::singleShot(2000, this, &QueryMaster::QueryMasterServer);
+			if(pServer->m_bBogusServer) {
+				pServer->m_bBogusServer = true;
+				if(pServer->m_bCached) {
+					emit ServerNeedsRemoval(pServer);
+				} else {
+					ClearServerList();
+					const int iRequeryDelayMs = 2000;
+					QTimer::singleShot(iRequeryDelayMs, this, &QueryMaster::QueryMasterServer);
+				}
 				return;
 			}
 
@@ -332,6 +347,11 @@ void QueryMaster::ReadPendingPackets() {
 			break;
 		}
 		case RESPONSE_SERVERS: {
+			qDebug() << "Received server list";
+
+			if(!m_bReceivedMasterPacket)
+				m_bReceivedMasterPacket = true;
+
 			if(m_bFinishedQueryingMaster)
 				continue;
 
@@ -351,7 +371,9 @@ void QueryMaster::ReadPendingPackets() {
 					break;
 				}
 
-				if(FindServerFromAddress(hAddrServer, iPort)) {
+				ServerInfo* pExistingServer = FindServerFromAddress(hAddrServer, iPort);
+				if(pExistingServer) {
+					SendInfoQuery(pExistingServer);
 					continue;
 				}
 
@@ -376,7 +398,7 @@ void QueryMaster::ReadPendingPackets() {
 					break;
 				}
 			}
-			qDebug() << "Total servers: " << m_aServers.size();
+			qDebug() << "Received servers from master: " << m_aServers.size();
 			break;
 		}
 		}
@@ -484,13 +506,35 @@ void QueryMaster::UpdateServers() {
 	}
 }
 
-void QueryMaster::MakeFavoriteFromAddr(quint32 iAddr, quint16 iPort) {
+void QueryMaster::MakeFavoriteFromAddr(std::pair<quint32, quint16> addr) {
+	ServerInfo* pExistingServer = FindServerFromAddress(QHostAddress(addr.first), addr.second);
+	if(pExistingServer)
+		return;
+
 	ServerInfo* pServer = new ServerInfo;
-	pServer->m_hAddress = QHostAddress(iAddr);
-	pServer->m_iPort = iPort;
+	pServer->m_hAddress = QHostAddress(addr.first);
+	pServer->m_iPort = addr.second;
 	pServer->m_iInternalID = m_aServers.size();
 	pServer->m_timeQueryStart = std::chrono::system_clock::now();
 	pServer->m_bFavorited = true;
+
+	m_aServers.push_back(pServer);
+
+	SendInfoQuery(pServer);
+	SendPlayersQuery(pServer);
+}
+
+void QueryMaster::LoadCachedServer(std::pair<quint32, quint16> addr) {
+	ServerInfo* pExistingServer = FindServerFromAddress(QHostAddress(addr.first), addr.second);
+	if(pExistingServer)
+		return;
+
+	ServerInfo* pServer = new ServerInfo;
+	pServer->m_hAddress = QHostAddress(addr.first);
+	pServer->m_iPort = addr.second;
+	pServer->m_iInternalID = m_aServers.size();
+	pServer->m_timeQueryStart = std::chrono::system_clock::now();
+	pServer->m_bCached = true;
 
 	m_aServers.push_back(pServer);
 
@@ -515,4 +559,23 @@ void QueryMaster::QueryAddress(QHostAddress hAddress, quint16 iPort) {
 	SendInfoQuery(pServer);
 
 	m_aServers.push_back(pServer);
+}
+
+void QueryMaster::CheckForTimeouts() {
+	if(!m_bReceivedMasterPacket) {
+		qDebug() << "Master server timed out, querying another...";
+		++m_iStoredAddressesIndex;
+		if((m_iStoredAddressesIndex) >= m_aStoredMasterAddresses.size())
+			m_iStoredAddressesIndex %= m_aStoredMasterAddresses.size();
+
+		QueryMasterServer();
+	}
+}
+
+// risky
+void QueryMaster::RemoveServer(int iServer) {
+	for(int i = iServer+1; i < m_aServers.size(); ++i) {
+		m_aServers[i]->m_iInternalID -= 1;
+	}
+	m_aServers.erase(m_aServers.begin() + iServer);
 }

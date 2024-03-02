@@ -30,16 +30,67 @@ MainWindow::MainWindow(QWidget *parent)
 	m_QueryMaster = new QueryMaster(this);
 	connect(m_QueryMaster, &QueryMaster::ServerIsReady, this, &MainWindow::OnServerReady);
 	connect(m_QueryMaster, &QueryMaster::ServerUpdated, this, &MainWindow::OnServerUpdated);
+	connect(m_QueryMaster, &QueryMaster::ServerNeedsRemoval, this, &MainWindow::OnServerNeedsRemoval);
 	connect(&timerAutoRefresh, &QTimer::timeout, this, &MainWindow::OnTimerAutoRefresh);
-	m_QueryMaster->QueryMasterServer();
 
 	m_Config.LoadConfig();
-	ApplyConfig();
-	for(auto it = m_Config.m_aiFavoritedServers.begin(); it != m_Config.m_aiFavoritedServers.end(); ++it) {
-		m_QueryMaster->MakeFavoriteFromAddr(it->first, it->second);
-	}
 
-	connect(pTable, SIGNAL(&QHeaderView::sectionResized), this, SLOT(&MainWindow::OnServerListSectionResized));
+	qDebug() << "Cached servers: " << m_Config.m_aCachedServers.size();
+	qDebug() << "Favorited servers: " << m_Config.m_aFavoritedServers.size();
+	for(auto it = m_Config.m_aCachedServers.begin(); it != m_Config.m_aCachedServers.end(); ++it) {
+		m_QueryMaster->LoadCachedServer(*it);
+	}
+	for(auto it = m_Config.m_aFavoritedServers.begin(); it != m_Config.m_aFavoritedServers.end(); ++it) {
+		m_QueryMaster->MakeFavoriteFromAddr(*it);
+	}
+	if(m_Config.m_aCachedServers.size() == 0)
+		m_QueryMaster->QueryMasterServer();
+
+	connect(pTable->horizontalHeader(), SIGNAL(sectionResized(int, int, int)), this, SLOT(OnServerListSectionResized(int, int, int)));
+
+	m_actTrayShow = new QAction;
+	m_actTrayReconnect = new QAction;
+	m_actTrayToggleNotifications = new QAction;
+	m_actTrayOptions = new QAction;
+	m_actTrayInfo = new QAction;
+	m_actTrayQuit = new QAction;
+
+	m_actTrayShow->setText("Open");
+	m_actTrayReconnect->setText("Reconnect to last");
+	m_actTrayToggleNotifications->setText("Enable notifiactions");
+	m_actTrayOptions->setText("Options");
+	m_actTrayInfo->setText("Info");
+	m_actTrayQuit->setText("Quit");
+
+	connect(&m_tray, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(OnTrayIconActivated(QSystemTrayIcon::ActivationReason)));
+	connect(m_actTrayShow, &QAction::triggered, this, &MainWindow::OnActionShowTriggered);
+	connect(m_actTrayReconnect, &QAction::triggered, this, &MainWindow::on_actionReconnectLast_triggered);
+	connect(m_actTrayToggleNotifications, &QAction::triggered, this, &MainWindow::OnActionToggleNotificationsTriggered);
+	connect(m_actTrayOptions, &QAction::triggered, this, &MainWindow::on_actionOptions_triggered);
+	connect(m_actTrayInfo, &QAction::triggered, this, &MainWindow::on_actionInfo_triggered);
+	connect(m_actTrayQuit, &QAction::triggered, this, &MainWindow::OnActionQuitTriggered);
+
+	m_menuTray = new QMenu;
+	m_menuTray->addAction(m_actTrayShow);
+	m_menuTray->addAction(m_actTrayReconnect);
+	m_menuTray->addSeparator();
+	//nuh-uh
+	//m_menuTray->addAction(m_actTrayToggleNotifications);
+	m_menuTray->addAction(m_actTrayOptions);
+	m_menuTray->addAction(m_actTrayInfo);
+	m_menuTray->addSeparator();
+	m_menuTray->addAction(m_actTrayQuit);
+
+	m_iconTray = new QIcon;
+	m_iconTray->addFile(":/res/icon/icon.ico");
+
+	m_tray.setContextMenu(m_menuTray);
+	m_tray.setToolTip("of-server-browser");
+	m_tray.setObjectName("of-server-browser");
+	m_tray.setIcon(*m_iconTray);
+	m_tray.setVisible(m_Config.m_bUseTray);
+
+	ApplyConfig();
 }
 
 void MainWindow::ApplyConfig() {
@@ -84,6 +135,8 @@ void MainWindow::ApplyConfig() {
 	}
 
 	this->resize(m_Config.m_iMainWindowWidth, m_Config.m_iMainWindowHeight);
+
+	UpdateReconnectActions();
 }
 
 MainWindow::~MainWindow()
@@ -188,6 +241,15 @@ void MainWindow::DisplayFilteredServers() {
 void MainWindow::OnServerReady(ServerInfo* pServer) {
 	QStringList astrFilterTags = m_Config.m_strFilterTags.split(",");
 
+	if(pServer->m_bBogusServer)
+		return;
+
+	if(!pServer->m_bCached && m_Config.m_bEnableCaching) {
+		m_Config.m_aCachedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iPort));
+		pServer->m_bCached = true;
+		m_Config.SaveConfig();
+	}
+
 	if(m_Config.m_bHideEmptyPlayers && pServer->m_iPlayers == 0)
 		return;
 
@@ -211,8 +273,8 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 
 	if(m_Config.m_bDisplayOnlyFavorited && !pServer->m_bFavorited) {
 		bool bFoundInFavorites = false;
-		for(int i = 0; i < m_Config.m_aiFavoritedServers.size(); ++i) {
-			if(pServer->m_hAddress.toIPv4Address() == m_Config.m_aiFavoritedServers[i].first && pServer->m_iPort == m_Config.m_aiFavoritedServers[i].second) {
+		for(int i = 0; i < m_Config.m_aFavoritedServers.size(); ++i) {
+			if(pServer->m_hAddress.toIPv4Address() == m_Config.m_aFavoritedServers[i].first && pServer->m_iPort == m_Config.m_aFavoritedServers[i].second) {
 				bFoundInFavorites = true;
 				break;
 			}
@@ -492,10 +554,7 @@ void MainWindow::on_buttonQuickRefresh_clicked()
 
 void MainWindow::on_buttonConnect_clicked()
 {
-	QLineEdit* pOutConnectURL = this->findChild<QLineEdit*>("outputConnectLink");
-	if(pOutConnectURL->text().isEmpty())
-		return;
-	QDesktopServices::openUrl(pOutConnectURL->text());
+	ConnectToSelectedServer();
 	if(m_Config.m_bCloseAfterConnect)
 		this->close();
 }
@@ -631,6 +690,7 @@ void MainWindow::on_actionReset_config_triggered()
 		ConfigMaster().SaveConfig();
 		m_Config.LoadConfig();
 		ApplyConfig();
+		m_tray.setVisible(false);
 		OnStyleChanged(m_Config.m_strStyle);
 	}
 }
@@ -646,9 +706,9 @@ void MainWindow::on_actionBookmark_selected_server_triggered()
 	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
 	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
 
-	for(auto it = m_Config.m_aiFavoritedServers.begin(); it != m_Config.m_aiFavoritedServers.end(); ++it) {
+	for(auto it = m_Config.m_aFavoritedServers.begin(); it != m_Config.m_aFavoritedServers.end(); ++it) {
 		if(pServer->m_hAddress.toIPv4Address() == it->first && pServer->m_iPort == it->second) {
-			m_Config.m_aiFavoritedServers.erase(it);
+			m_Config.m_aFavoritedServers.erase(it);
 			pServer->m_bFavorited = false;
 			DisplayFilteredServers();
 			m_Config.SaveConfig();
@@ -656,7 +716,7 @@ void MainWindow::on_actionBookmark_selected_server_triggered()
 		}
 	}
 
-	m_Config.m_aiFavoritedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iPort));
+	m_Config.m_aFavoritedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iPort));
 	DisplayFilteredServers();
 	m_Config.SaveConfig();
 }
@@ -700,9 +760,9 @@ void MainWindow::on_actionCopy_connect_link_to_clipboard_triggered()
 	hClipboard->setText(MakeConnectURL(pServer));
 }
 
-QString MainWindow::MakeConnectURL(ServerInfo* pServer) {
+QString MainWindow::MakeConnectURL(ServerInfo* pServer, bool bSteamURLOnly) {
 	QString strURL;
-	if(m_Config.m_bUseSteamConnectme)
+	if(m_Config.m_bUseSteamConnectme && !bSteamURLOnly)
 		strURL = "https://connectsteam.me/?";
 	else
 		strURL = "steam://connect/";
@@ -713,3 +773,119 @@ QString MainWindow::MakeConnectURL(ServerInfo* pServer) {
 
 	return strURL;
 }
+
+void MainWindow::OnServerNeedsRemoval(ServerInfo* pServer) {
+	if(pServer->m_bBogusServer && pServer->m_bCached) {
+		for(auto it = m_Config.m_aCachedServers.begin(); it != m_Config.m_aCachedServers.end(); ++it) {
+			if(it->first == pServer->m_hAddress.toIPv4Address() && it->second == pServer->m_iPort) {
+				m_Config.m_aCachedServers.erase(it);
+				break;
+			}
+		}
+	}
+
+	m_Config.SaveConfig();
+	// m_QueryMaster->RemoveServer(pServer->m_iInternalID);
+}
+
+void MainWindow::on_actionConnect_triggered()
+{
+	ConnectToSelectedServer();
+}
+
+void MainWindow::ConnectToSelectedServer() {
+	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
+	if(pTable->selectedItems().size() < 1) {
+		pTable->clearSelection();
+		return;
+	}
+
+	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
+	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
+
+	QDesktopServices::openUrl(MakeConnectURL(pServer, true));
+
+	m_Config.m_strLastConnectedName = pServer->m_strName;
+	m_Config.m_iLastConnectedAddr = pServer->m_hAddress.toIPv4Address();
+	m_Config.m_iLastConnectedPort = pServer->m_iPort;
+
+	UpdateReconnectActions();
+
+	m_Config.SaveConfig();
+}
+
+
+void MainWindow::on_actionReconnectLast_triggered()
+{
+	if(m_Config.m_iLastConnectedAddr == 0 && m_Config.m_iLastConnectedPort == 0)
+		return;
+
+	ServerInfo* pServer = m_QueryMaster->FindServerFromAddress(QHostAddress(m_Config.m_iLastConnectedAddr), m_Config.m_iLastConnectedPort);
+	if(!pServer) {
+		m_Config.m_strLastConnectedName = "None";
+		m_Config.m_iLastConnectedAddr = 0;
+		m_Config.m_iLastConnectedPort = 0;
+		UpdateReconnectActions();
+		return;
+	}
+
+	QDesktopServices::openUrl(MakeConnectURL(pServer, true));
+}
+
+void MainWindow::UpdateReconnectActions() {
+	ServerInfo* pServer = m_QueryMaster->FindServerFromAddress(QHostAddress(m_Config.m_iLastConnectedAddr), m_Config.m_iLastConnectedPort);
+	QAction* pMenuReconnect = this->findChild<QAction*>("actionReconnectLast");
+
+	QString strReconnect = "Reconnect to ";
+	strReconnect.append(m_Config.m_strLastConnectedName);
+
+	pMenuReconnect->setText(strReconnect);
+
+	if(strReconnect.length() > 30) {
+		strReconnect.truncate(30);
+		strReconnect.append("...");
+	}
+
+	if(m_actTrayReconnect)
+		m_actTrayReconnect->setText(strReconnect);
+}
+
+void MainWindow::OnTrayIconActivated(QSystemTrayIcon::ActivationReason hReason) {
+	switch(hReason) {
+	case QSystemTrayIcon::ActivationReason::Trigger: {
+		this->show();
+		break;
+	}
+	}
+}
+
+void MainWindow::OnActionShowTriggered() {
+	this->show();
+}
+
+void MainWindow::OnActionToggleNotificationsTriggered() {
+	m_Config.m_bEnableNotifications = !m_Config.m_bEnableNotifications;
+	m_Config.SaveConfig();
+}
+
+void MainWindow::OnActionQuitTriggered() {
+	m_Config.m_bUseTray = false;
+	this->close();
+}
+
+void MainWindow::closeEvent(QCloseEvent * pEvent) {
+	if(m_Config.m_bUseTray) {
+		this->hide();
+		pEvent->ignore();
+	} else {
+		pEvent->accept();
+		QApplication::instance()->exit(0);
+	}
+}
+
+void MainWindow::on_actionClear_cache_triggered()
+{
+	m_Config.m_aCachedServers.clear();
+	m_Config.SaveConfig();
+}
+
