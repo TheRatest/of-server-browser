@@ -350,7 +350,7 @@
             <x>0</x>
             <y>0</y>
             <width>416</width>
-            <height>493</height>
+            <height>477</height>
            </rect>
           </property>
           <layout class="QFormLayout" name="formLayout">
@@ -1551,7 +1551,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_Menu">
@@ -1571,6 +1571,7 @@
     <addaction name="actionBookmark_selected_server"/>
     <addaction name="actionCopy_connect_link_to_clipboard"/>
     <addaction name="actionConnect"/>
+    <addaction name="actionRequest_server_rules"/>
     <addaction name="actionRefresh_selected_server"/>
     <addaction name="actionRefresh_all_servers"/>
     <addaction name="actionReload_server_list"/>
@@ -1693,6 +1694,11 @@
    </property>
    <property name="menuRole">
     <enum>QAction::ApplicationSpecificRole</enum>
+   </property>
+  </action>
+  <action name="actionRequest_server_rules">
+   <property name="text">
+    <string>Request server rules</string>
    </property>
   </action>
  </widget>

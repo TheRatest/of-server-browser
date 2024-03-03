@@ -7,6 +7,8 @@
 #include "configmaster.h"
 #include <QTimer>
 #include <QSystemTrayIcon>
+#include <QLocalServer>
+#include <QLocalSocket>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -36,6 +38,9 @@ public:
 	QAction* m_actTrayInfo = nullptr;
 	QAction* m_actTrayQuit = nullptr;
 
+	// to not open the app multiple times
+	QLocalServer* m_serverLocal;
+
 	void resizeEvent(QResizeEvent* pEvent);
 	void closeEvent(QCloseEvent * pEvent);
 
@@ -46,11 +51,15 @@ public slots:
 	void OnServerNeedsRemoval(ServerInfo*);
 	void OnStyleChanged(QString&);
 	void OnServerListSectionResized(int, int, int);
+
+	void OnLocalServerNewConnection();
 private slots:
 	void OnTrayIconActivated(QSystemTrayIcon::ActivationReason);
 	void OnActionShowTriggered();
 	void OnActionToggleNotificationsTriggered();
 	void OnActionQuitTriggered();
+	// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	void AAAAAAAAAAAAAA();
 
     void on_buttonViewRules_clicked();
 
@@ -108,6 +117,8 @@ private slots:
 
 	void on_actionReconnectLast_triggered();
 	void on_actionClear_cache_triggered();
+
+	void on_actionRequest_server_rules_triggered();
 
 private:
     Ui::MainWindow *ui;

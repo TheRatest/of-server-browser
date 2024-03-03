@@ -3,7 +3,7 @@
 #include "rulesdialog.h"
 #include "optionsdialog.h"
 #include "infodialog.h"
-#include "queryipdialog.h"
+#include "QueryIPDialog.h"
 #include <QDesktopServices>
 #include <QPushButton>
 #include <QResizeEvent>
@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
 	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
-	pTable->setColumnHidden(0, true);
+	pTable->setColumnHidden(0, false);
 	pTable->setColumnWidth(1, 20);
 	pTable->setColumnWidth(2, 20);
 	pTable->setColumnWidth(3, 230);
@@ -265,10 +265,10 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 	if(m_Config.m_iGameVersion != pServer->m_iRevision && m_Config.m_iGameVersion != 0)
 		return;
 
-	if(!pServer->m_strMap.contains(m_Config.m_strFilterMap) && !m_Config.m_strFilterMap.isEmpty())
+	if(!pServer->m_strMap.toLower().contains(m_Config.m_strFilterMap.toLower()) && !m_Config.m_strFilterMap.isEmpty())
 		return;
 
-	if(!pServer->m_strName.contains(m_Config.m_strFilterHostname) && m_Config.m_strFilterHostname.length() > 0)
+	if(!pServer->m_strName.toLower().contains(m_Config.m_strFilterHostname.toLower()) && m_Config.m_strFilterHostname.length() > 0)
 		return;
 
 	if(m_Config.m_bDisplayOnlyFavorited && !pServer->m_bFavorited) {
@@ -300,13 +300,10 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 	strServerList.append(QString::number(m_QueryMaster->m_aServers.size()));
 	strServerList.append(" total)");
 	pServerListLabel->setText(strServerList);
-	int iRow = pTable->rowCount();
-	pTable->setRowCount(pTable->rowCount()+1);
 
 	QTableWidgetItem* pItemInternalID = new QTableWidgetItem;
 	pItemInternalID->setData(Qt::DisplayRole, pServer->m_iInternalID);
 	pItemInternalID->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 0, pItemInternalID);
 
 	QTableWidgetItem* pItemPassworded = new QTableWidgetItem;
 	if(pServer->m_bPassworded)
@@ -314,7 +311,6 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 	else
 		pItemPassworded->setText("");
 	pItemPassworded->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 1, pItemPassworded);
 
 	QTableWidgetItem* pItemVAC = new QTableWidgetItem;
 	if(pServer->m_bVAC)
@@ -322,44 +318,59 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 	else
 		pItemVAC->setText("");
 	pItemVAC->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 2, pItemVAC);
 
 	QTableWidgetItem* pItemHostname = new QTableWidgetItem;
 	pItemHostname->setText(pServer->m_strName);
 	pItemHostname->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 3, pItemHostname);
 
 	QTableWidgetItem* pItemBots = new QTableWidgetItem;
 	pItemBots->setData(Qt::DisplayRole, pServer->m_iBots);
 	pItemBots->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 4, pItemBots);
-
 
 	QTableWidgetItem* pItemPlayers = new QTableWidgetItem;
 	pItemPlayers->setData(Qt::DisplayRole, pServer->m_iPlayers);
 	pItemPlayers->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 5, pItemPlayers);
-
 
 	QTableWidgetItem* pItemMaxPlayers = new QTableWidgetItem;
 	pItemMaxPlayers->setData(Qt::DisplayRole, pServer->m_iMaxPlayers);
 	pItemMaxPlayers->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 6, pItemMaxPlayers);
-
 
 	QTableWidgetItem* pItemMap = new QTableWidgetItem;
 	pItemMap->setText(pServer->m_strMap);
 	pItemMap->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	pTable->setItem(iRow, 7, pItemMap);
 
 	QTableWidgetItem* pItemLatency = new QTableWidgetItem;
 	pItemLatency->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 	pItemLatency->setData(Qt::DisplayRole, pServer->m_iLatencyMs);
-	pTable->setItem(iRow, 8, pItemLatency);
 
 	QTableWidgetItem* pItemTags = new QTableWidgetItem;
 	pItemTags->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 	pItemTags->setText(pServer->m_strTags);
+
+	int iRow;
+	int iExistingServer = -1;
+	for(int i = 0; i < pTable->rowCount(); ++i) {
+		if(pTable->item(i, 0)->data(Qt::DisplayRole) == pServer->m_iInternalID) {
+			iExistingServer = i;
+			break;
+		}
+	}
+	if(iExistingServer != -1)
+		iRow = iExistingServer;
+	else {
+		iRow = pTable->rowCount();
+		pTable->setRowCount(pTable->rowCount()+1);
+	}
+
+	pTable->setItem(iRow, 0, pItemInternalID);
+	pTable->setItem(iRow, 1, pItemPassworded);
+	pTable->setItem(iRow, 2, pItemVAC);
+	pTable->setItem(iRow, 3, pItemHostname);
+	pTable->setItem(iRow, 4, pItemBots);
+	pTable->setItem(iRow, 5, pItemPlayers);
+	pTable->setItem(iRow, 6, pItemMaxPlayers);
+	pTable->setItem(iRow, 7, pItemMap);
+	pTable->setItem(iRow, 8, pItemLatency);
 	pTable->setItem(iRow, 9, pItemTags);
 }
 
@@ -367,36 +378,75 @@ void MainWindow::OnServerUpdated(ServerInfo* pServer) {
 	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
 
 	for(int i = 0; i < pTable->rowCount(); ++i) {
-		if(pTable->item(i, 0)->data(Qt::DisplayRole) == pServer->m_iInternalID) {
+		QTableWidgetItem* pInternalID = pTable->item(i, 0);
+		if(!pInternalID) {
+			OnServerReady(pServer);
+			return;
+		}
+		if(pInternalID->data(Qt::DisplayRole) == pServer->m_iInternalID) {
+			QTableWidgetItem* pPassworded = pTable->item(i, 1);
+			QTableWidgetItem* pVAC = pTable->item(i, 2);
+			QTableWidgetItem* pName = pTable->item(i, 3);
+			QTableWidgetItem* pBots = pTable->item(i, 4);
+			QTableWidgetItem* pPlayers = pTable->item(i, 5);
+			QTableWidgetItem* pMaxPlayers = pTable->item(i, 6);
+			QTableWidgetItem* pMap = pTable->item(i, 7);
+			QTableWidgetItem* pPing = pTable->item(i, 8);
+			QTableWidgetItem* pTags = pTable->item(i, 9);
+
+			if(!pPassworded || !pVAC || !pName || !pBots || !pPlayers || !pMaxPlayers || !pMap || !pPing || !pTags) {
+				qDebug() << "Re-initializing " << pServer->m_strName;
+				OnServerReady(pServer);
+				pPassworded = pTable->item(i, 1);
+				pVAC = pTable->item(i, 2);
+				pName = pTable->item(i, 3);
+				pBots = pTable->item(i, 4);
+				pPlayers = pTable->item(i, 5);
+				pMaxPlayers = pTable->item(i, 6);
+				pMap = pTable->item(i, 7);
+				pPing = pTable->item(i, 8);
+				pTags = pTable->item(i, 9);
+			}
+
 			if(pServer->m_bPassworded)
-				pTable->item(i, 1)->setData(Qt::DisplayRole, pServer->m_bPassworded);
+				pPassworded->setData(Qt::DisplayRole, pServer->m_bPassworded);
 			else
-				pTable->item(i, 1)->setText("");
+				pPassworded->setText("");
 			if(pServer->m_bVAC)
-				pTable->item(i, 2)->setData(Qt::DisplayRole, pServer->m_bVAC);
+				pVAC->setData(Qt::DisplayRole, pServer->m_bVAC);
 			else
-				pTable->item(i, 2)->setText("");
-			pTable->item(i, 3)->setText(pServer->m_strName);
-			pTable->item(i, 4)->setData(Qt::DisplayRole, pServer->m_iBots);
-			pTable->item(i, 5)->setData(Qt::DisplayRole, pServer->m_iPlayers);
-			pTable->item(i, 6)->setData(Qt::DisplayRole, pServer->m_iMaxPlayers);
-			pTable->item(i, 7)->setText(pServer->m_strMap);
-			pTable->item(i, 8)->setData(Qt::DisplayRole, pServer->m_iLatencyMs);
-			pTable->item(i, 9)->setText(pServer->m_strTags);
+				pVAC->setText("");
+			pName->setText(pServer->m_strName);
+			pBots->setData(Qt::DisplayRole, pServer->m_iBots);
+			pPlayers->setData(Qt::DisplayRole, pServer->m_iPlayers);
+			pMaxPlayers->setData(Qt::DisplayRole, pServer->m_iMaxPlayers);
+			pMap->setText(pServer->m_strMap);
+			pPing->setData(Qt::DisplayRole, pServer->m_iLatencyMs);
+			pTags->setText(pServer->m_strTags);
+			return;
 		}
 	}
+
 	on_tableServers_itemSelectionChanged();
 }
 
 void MainWindow::on_buttonRefresh_clicked()
 {
+	this->findChild<QPushButton*>("buttonRefresh")->setEnabled(false);
 	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
-	pTable->clearSelection();
+	//pTable->setSortingEnabled(false);
 	pTable->clearContents();
 	pTable->setRowCount(0);
-	//m_QueryMaster->ClearServerList();
+	m_QueryMaster->ClearServerList();
+	for(auto it = m_Config.m_aCachedServers.begin(); it != m_Config.m_aCachedServers.end(); ++it) {
+		m_QueryMaster->LoadCachedServer(*it);
+	}
+	for(auto it = m_Config.m_aFavoritedServers.begin(); it != m_Config.m_aFavoritedServers.end(); ++it) {
+		m_QueryMaster->MakeFavoriteFromAddr(*it);
+	}
 	m_QueryMaster->QueryMasterServer();
 	DisplayFilteredServers();
+	QTimer::singleShot(1500, this, &MainWindow::AAAAAAAAAAAAAA);
 }
 
 
@@ -833,7 +883,7 @@ void MainWindow::on_actionReconnectLast_triggered()
 }
 
 void MainWindow::UpdateReconnectActions() {
-	ServerInfo* pServer = m_QueryMaster->FindServerFromAddress(QHostAddress(m_Config.m_iLastConnectedAddr), m_Config.m_iLastConnectedPort);
+	//ServerInfo* pServer = m_QueryMaster->FindServerFromAddress(QHostAddress(m_Config.m_iLastConnectedAddr), m_Config.m_iLastConnectedPort);
 	QAction* pMenuReconnect = this->findChild<QAction*>("actionReconnectLast");
 
 	QString strReconnect = "Reconnect to ";
@@ -889,3 +939,28 @@ void MainWindow::on_actionClear_cache_triggered()
 	m_Config.SaveConfig();
 }
 
+void MainWindow::AAAAAAAAAAAAAA() {
+	this->findChild<QTableWidget*>("tablePlayers")->sortItems(5, Qt::DescendingOrder);
+	//this->findChild<QTableWidget*>("tablePlayers")->setSortingEnabled(true);
+	this->findChild<QPushButton*>("buttonRefresh")->setEnabled(true);
+	on_buttonQuickRefresh_clicked();
+}
+
+void MainWindow::on_actionRequest_server_rules_triggered()
+{
+	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
+	if(pTable->selectedItems().size() < 1) {
+		pTable->clearSelection();
+		return;
+	}
+
+	int iInternalServID = pTable->item(pTable->selectedItems()[0]->row(), 0)->data(Qt::DisplayRole).toInt();
+	ServerInfo* pServer = m_QueryMaster->m_aServers[iInternalServID];
+
+	pServer->m_bQueryingRules = true;
+	m_QueryMaster->UpdateServer(pServer->m_iInternalID);
+}
+
+void MainWindow::OnLocalServerNewConnection() {
+	this->show();
+}

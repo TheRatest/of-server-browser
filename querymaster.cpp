@@ -272,7 +272,7 @@ void QueryMaster::ReadPendingPackets() {
 			if(!pServer->m_bReadyPlayers)
 				SendPlayersQuery(pServer, *iChallenge);
 
-			if(!pServer->m_bReadyRules) // && pServer->m_bQueryingRules)
+			if(!pServer->m_bReadyRules && pServer->m_bQueryingRules)
 				SendRulesQuery(pServer, *iChallenge);
 
 			break;
