@@ -79,6 +79,16 @@ void ConfigMaster::LoadConfig() {
 			m_aCachedServers.push_back(std::make_pair(iAddr, iPort));
 		}
 	}
+	if(m_iCfgVersion >= 6) {
+		m_iBookmarkedAddr = ReadUInt32(rawData, iCursor);
+		m_iBookmarkedPort = ReadUInt16(rawData, iCursor);
+		m_strBookmarkedName = ReadString(rawData, iCursor);
+	}
+	if(m_iCfgVersion >= 7) {
+		m_bFullAutoRefreshServers = ReadInt8(rawData, iCursor);
+		m_flFullAutoRefreshInterval = ReadFloat(rawData, iCursor);
+		m_bNotificationFavoritesOnly = ReadInt8(rawData, iCursor);
+	}
 }
 
 void ConfigMaster::SaveConfig() {
@@ -128,6 +138,12 @@ void ConfigMaster::SaveConfig() {
 		WriteUInt32(rawData, m_aCachedServers[i].first);
 		WriteUInt16(rawData, m_aCachedServers[i].second);
 	}
+	WriteUInt32(rawData, m_iBookmarkedAddr);
+	WriteUInt16(rawData, m_iBookmarkedPort);
+	WriteString(rawData, m_strBookmarkedName);
+	WriteUInt8(rawData, m_bFullAutoRefreshServers);
+	WriteFloat(rawData, m_flFullAutoRefreshInterval);
+	WriteUInt8(rawData, m_bNotificationFavoritesOnly);
 
 	fileCfg.open(QIODevice::WriteOnly);
 	fileCfg.write(rawData);

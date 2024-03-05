@@ -10,8 +10,28 @@ QString ServerPlayer::DurationString() {
 	int iHours = floor(m_flDuration / 3600);
 	int iMinutes = (int)floor(m_flDuration / 60) % 60;
 	int iSeconds = floor((int)m_flDuration % 60);
-	QString strOut = "%1:%2:%3";
-	strOut = strOut.arg(iHours).arg(iMinutes).arg(iSeconds);
+	QString strOut = "";
+	if(iHours > 9)
+		strOut.append(QString::number(iHours));
+	else {
+		strOut.append("0");
+		strOut.append(QString::number(iHours));
+	}
+	strOut.append(":");
+	if(iMinutes > 9)
+		strOut.append(QString::number(iMinutes));
+	else {
+		strOut.append("0");
+		strOut.append(QString::number(iMinutes));
+	}
+	strOut.append(":");
+	if(iSeconds > 9)
+		strOut.append(QString::number(iSeconds));
+	else {
+		strOut.append("0");
+		strOut.append(QString::number(iSeconds));
+	}
+
 	return strOut;
 }
 
@@ -254,7 +274,8 @@ void QueryMaster::ReadPendingPackets() {
 				continue;
 
 			// the packet gets checked for being the right one inside that method, not here
-			if(pServer->QueueRulesPacket(recvPacket))
+			bool bFinishedParsingRules = pServer->QueueRulesPacket(recvPacket);
+			if(bFinishedParsingRules)
 				emit ServerUpdated(pServer);
 
 			continue;
@@ -508,8 +529,10 @@ void QueryMaster::UpdateServers() {
 
 void QueryMaster::MakeFavoriteFromAddr(std::pair<quint32, quint16> addr) {
 	ServerInfo* pExistingServer = FindServerFromAddress(QHostAddress(addr.first), addr.second);
-	if(pExistingServer)
+	if(pExistingServer) {
+		pExistingServer->m_bFavorited = true;
 		return;
+	}
 
 	ServerInfo* pServer = new ServerInfo;
 	pServer->m_hAddress = QHostAddress(addr.first);

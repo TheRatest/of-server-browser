@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>240</height>
+    <width>340</width>
+    <height>440</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>300</width>
-    <height>150</height>
+    <width>340</width>
+    <height>440</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>300</width>
-    <height>10000</height>
+    <width>340</width>
+    <height>440</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -41,8 +41,8 @@
   <widget class="QPushButton" name="buttonClose">
    <property name="geometry">
     <rect>
-     <x>90</x>
-     <y>210</y>
+     <x>110</x>
+     <y>410</y>
      <width>120</width>
      <height>24</height>
     </rect>
@@ -56,8 +56,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>300</width>
-     <height>208</height>
+     <width>340</width>
+     <height>407</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -76,6 +76,164 @@
     <property name="spacing">
      <number>3</number>
     </property>
+    <item row="15" column="0" rowspan="2" colspan="2">
+     <widget class="QFrame" name="frame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::Box</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <layout class="QFormLayout" name="formLayout">
+       <item row="1" column="0">
+        <widget class="QLabel" name="labelNotifThreshold">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Amount of players needed for a notification</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="spinNotifThreshold">
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>64</number>
+         </property>
+         <property name="value">
+          <number>3</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="labelNotifCooldown">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Notification cooldown (in minutes)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkNotifFavOnly">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Favorited servers only</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QSpinBox" name="spinNotifCooldown">
+         <property name="maximumSize">
+          <size>
+           <width>50</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="maximum">
+          <number>1440</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="11" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkFullAutoRefresh">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Enable full auto-refresh (alongside normal auto-refresh)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QPushButton" name="buttonBrowseStyle">
+      <property name="text">
+       <string>Browse</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkCloseAfterConnect">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Close the app after using the &quot;Connect&quot; button</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="0">
+     <widget class="QLabel" name="labelRefresh">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Server auto-refresh interval</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <widget class="QLineEdit" name="inputCustomStyle">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="Line" name="line_5">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0" colspan="2">
      <widget class="QCheckBox" name="checkTray">
       <property name="enabled">
@@ -95,49 +253,6 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <widget class="QLabel" name="labelStyle">
-      <property name="minimumSize">
-       <size>
-        <width>180</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Application theme</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="1">
-     <widget class="QComboBox" name="comboDCAction">
-      <property name="minimumSize">
-       <size>
-        <width>100</width>
-        <height>0</height>
-       </size>
-      </property>
-      <item>
-       <property name="text">
-        <string>Refresh</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Connect</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Favorite</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>Copy link</string>
-       </property>
-      </item>
-     </widget>
-    </item>
     <item row="0" column="0" colspan="2">
      <widget class="QCheckBox" name="checkSteamconnect">
       <property name="maximumSize">
@@ -151,7 +266,55 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
+    <item row="10" column="1">
+     <widget class="QDoubleSpinBox" name="spinRefreshInterval">
+      <property name="maximumSize">
+       <size>
+        <width>50</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="decimals">
+       <number>1</number>
+      </property>
+      <property name="minimum">
+       <double>1.000000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.100000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkEnableCache">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Enable caching servers</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="labelStyle">
+      <property name="minimumSize">
+       <size>
+        <width>180</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Application theme</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
      <widget class="QComboBox" name="comboStyle">
       <property name="minimumSize">
        <size>
@@ -201,14 +364,72 @@
       </item>
      </widget>
     </item>
-    <item row="5" column="1">
-     <widget class="QPushButton" name="buttonBrowseStyle">
-      <property name="text">
-       <string>Browse</string>
+    <item row="13" column="0" colspan="2">
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
-    <item row="6" column="0">
+    <item row="12" column="0">
+     <widget class="QLabel" name="labelFullRefreshSpin">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Server full auto-refresh interval</string>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="1">
+     <widget class="QDoubleSpinBox" name="spinFullRefreshInterval">
+      <property name="maximumSize">
+       <size>
+        <width>50</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="decimals">
+       <number>1</number>
+      </property>
+      <property name="minimum">
+       <double>10.000000000000000</double>
+      </property>
+      <property name="maximum">
+       <double>3600.000000000000000</double>
+      </property>
+      <property name="singleStep">
+       <double>0.100000000000000</double>
+      </property>
+      <property name="value">
+       <double>120.000000000000000</double>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="0" colspan="2">
+     <widget class="QCheckBox" name="checkEnableNotifications">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Enable notifications</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0" colspan="2">
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0" rowspan="2">
      <widget class="QLabel" name="labelDCAction">
       <property name="minimumSize">
        <size>
@@ -221,72 +442,34 @@
       </property>
      </widget>
     </item>
-    <item row="7" column="1">
-     <widget class="QDoubleSpinBox" name="spinRefreshInterval">
-      <property name="maximumSize">
+    <item row="8" column="1" rowspan="2">
+     <widget class="QComboBox" name="comboDCAction">
+      <property name="minimumSize">
        <size>
-        <width>50</width>
-        <height>25</height>
+        <width>100</width>
+        <height>0</height>
        </size>
       </property>
-      <property name="decimals">
-       <number>1</number>
-      </property>
-      <property name="minimum">
-       <double>1.000000000000000</double>
-      </property>
-      <property name="singleStep">
-       <double>0.100000000000000</double>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="0">
-     <widget class="QLineEdit" name="inputCustomStyle">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="0">
-     <widget class="QLabel" name="labelRefresh">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Server auto refresh interval</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0" colspan="2">
-     <widget class="QCheckBox" name="checkCloseAfterConnect">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Close the app after using the &quot;Connect&quot; button</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0" colspan="2">
-     <widget class="QCheckBox" name="checkEnableCache">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Enable caching servers</string>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
+      <item>
+       <property name="text">
+        <string>Refresh</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Connect</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Favorite</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Copy link</string>
+       </property>
+      </item>
      </widget>
     </item>
    </layout>

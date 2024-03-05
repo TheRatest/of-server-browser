@@ -298,6 +298,18 @@
          <property name="sizeAdjustPolicy">
           <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
          </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SingleSelection</enum>
+         </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
          <attribute name="horizontalHeaderDefaultSectionSize">
           <number>144</number>
          </attribute>
@@ -1568,6 +1580,7 @@
     <property name="title">
      <string>Server</string>
     </property>
+    <addaction name="actionFavorite_selected_server"/>
     <addaction name="actionBookmark_selected_server"/>
     <addaction name="actionCopy_connect_link_to_clipboard"/>
     <addaction name="actionConnect"/>
@@ -1576,7 +1589,9 @@
     <addaction name="actionRefresh_all_servers"/>
     <addaction name="actionReload_server_list"/>
     <addaction name="separator"/>
+    <addaction name="actionConnect_to_bookmarked_None"/>
     <addaction name="actionReconnectLast"/>
+    <addaction name="actionConnect_to_populated"/>
    </widget>
    <addaction name="menu_Menu"/>
    <addaction name="menuServer"/>
@@ -1644,7 +1659,7 @@
     <enum>QAction::ApplicationSpecificRole</enum>
    </property>
   </action>
-  <action name="actionBookmark_selected_server">
+  <action name="actionFavorite_selected_server">
    <property name="text">
     <string>Favorite selected server</string>
    </property>
@@ -1684,6 +1699,9 @@
    <property name="toolTip">
     <string>Reconnect to last server</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
    <property name="menuRole">
     <enum>QAction::ApplicationSpecificRole</enum>
    </property>
@@ -1699,6 +1717,48 @@
   <action name="actionRequest_server_rules">
    <property name="text">
     <string>Request server rules</string>
+   </property>
+   <property name="shortcut">
+    <string>H</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::ApplicationSpecificRole</enum>
+   </property>
+  </action>
+  <action name="actionConnect_to_bookmarked_None">
+   <property name="text">
+    <string>Connect to bookmarked (None)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::ApplicationSpecificRole</enum>
+   </property>
+  </action>
+  <action name="actionConnect_to_populated">
+   <property name="text">
+    <string>Connect to populated</string>
+   </property>
+   <property name="toolTip">
+    <string>Connect to populated (None)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::ApplicationSpecificRole</enum>
+   </property>
+  </action>
+  <action name="actionBookmark_selected_server">
+   <property name="text">
+    <string>Bookmark selected server</string>
+   </property>
+   <property name="shortcut">
+    <string>B</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::ApplicationSpecificRole</enum>
    </property>
   </action>
  </widget>

@@ -9,6 +9,7 @@
 #include <QSystemTrayIcon>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QQueue>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -32,7 +33,9 @@ public:
 	QMenu* m_menuTray;
 	QIcon* m_iconTray;
 	QAction* m_actTrayShow = nullptr;
+	QAction* m_actTrayConnectBookmarked = nullptr;
 	QAction* m_actTrayReconnect = nullptr;
+	QAction* m_actTrayConnectPopulated = nullptr;
 	QAction* m_actTrayToggleNotifications = nullptr;
 	QAction* m_actTrayOptions = nullptr;
 	QAction* m_actTrayInfo = nullptr;
@@ -40,6 +43,11 @@ public:
 
 	// to not open the app multiple times
 	QLocalServer* m_serverLocal;
+
+	// need to be accessed from the options dialog
+	QTimer m_timerAutoRefresh;
+	QTimer m_timerFullAutoRefresh;
+	QTimer m_timerNotificationsCooldown;
 
 	void resizeEvent(QResizeEvent* pEvent);
 	void closeEvent(QCloseEvent * pEvent);
@@ -59,7 +67,7 @@ private slots:
 	void OnActionToggleNotificationsTriggered();
 	void OnActionQuitTriggered();
 	// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-	void AAAAAAAAAAAAAA();
+	void DelayedRefreshButtonEanble();
 
     void on_buttonViewRules_clicked();
 
@@ -78,6 +86,8 @@ private slots:
 	void on_checkAutoRefresh_stateChanged(int arg1);
 
 	void OnTimerAutoRefresh();
+	void OnTimerFullAutoRefresh();
+	void OnTimerNotificationCooldown();
 	void on_spinMaxLatency_textChanged(const QString &arg1);
 
 	void on_spinGameVersion_textChanged(const QString &arg1);
@@ -104,8 +114,6 @@ private slots:
 
 	void on_actionReset_config_triggered();
 
-	void on_actionBookmark_selected_server_triggered();
-
 	void on_inputFilterName_textChanged(const QString &arg1);
 	void on_checkFavoritedOnly_stateChanged(int arg1);
 
@@ -120,13 +128,26 @@ private slots:
 
 	void on_actionRequest_server_rules_triggered();
 
+	void on_actionConnect_to_bookmarked_None_triggered();
+
+	void on_actionConnect_to_populated_triggered();
+
+	void on_actionFavorite_selected_server_triggered();
+
+	void on_actionBookmark_selected_server_triggered();
+
 private:
     Ui::MainWindow *ui;
 
-	QTimer timerAutoRefresh;
+	bool m_bNotificationsOnCooldown = false;
+
+	ServerInfo* m_pPopulatedServer = nullptr;
 	void DisplayFilteredServers();
 	void ConnectToSelectedServer();
-	void UpdateReconnectActions();
+	void UpdateConnectActions();
+	QQueue<ServerInfo*> m_aQueuedNotifServers;
+	void MakeNotification();
 	QString MakeConnectURL(ServerInfo* pServer, bool bSteamURLOnly = false);
+	QString MakeConnectURL(quint32 iAddr, quint16 iPort, bool bSteamURLOnly = false);
 };
 #endif // MAINWINDOW_H

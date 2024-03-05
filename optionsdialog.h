@@ -35,10 +35,24 @@ private slots:
 
 	void on_checkEnableCache_stateChanged(int arg1);
 
+	void on_checkEnableNotifications_stateChanged(int arg1);
+
+	void on_checkFullAutoRefresh_stateChanged(int arg1);
+
+	void on_spinFullRefreshInterval_valueChanged(double arg1);
+
+	void on_spinNotifThreshold_valueChanged(int arg1);
+
+	void on_checkNotifFavOnly_stateChanged(int arg1);
+
+	void on_spinNotifCooldown_valueChanged(int arg1);
+
 private:
 	Ui::OptionsDialog *ui;
 
 	ConfigMaster* m_Config;
+	QTimer* m_ptimerNotif;
+	QTimer* m_ptimerFullAutoRefresh;
 };
 
 #endif // OPTIONSDIALOG_H
