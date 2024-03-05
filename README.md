@@ -3,13 +3,14 @@
 
 ![preview](https://github.com/TheRatest/of-server-browser/blob/master/icon/preview.png)
 
-## Features (v1.2):
+## Features (v1.3):
 - Viewing all the public servers that your connection can reach
+- Notifications
 - Caching servers
 - System tray icon/menu
 - Auto-refresh
 - Filters
-- Favoriting/bookmarking servers
+- Favoriting & bookmarking servers
 - Viewing server details
 - Viewing the players (and sometimes the server convars)
 - Connecting to a server in a click of a button
@@ -37,6 +38,4 @@ Open the CMakeLists.txt file with Qt Creator and... build the app!
 - Player time being displayed as 0:0:1 and not as 00:00:01 (fixed in 1.3)
 
 ## Planned features
-- Notifications
-- More actions in the system tray menu
 - Linux releases
