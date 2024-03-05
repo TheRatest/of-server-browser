@@ -29,6 +29,14 @@ Open the CMakeLists.txt file with Qt Creator and... build the app!
 - Styles: [GTRONICK/QSS](https://github.com/GTRONICK/QSS) & [qss-stock](http://qss-stock.devsecstudio.com/)
 - Logo: [Gump_Enjoyer](https://steamcommunity.com/profiles/76561198201233559)
 
+## Known issues
+- Server details not updating after a server is updated (fixed in 1.3)
+- Server info in the main table not filled (fixed in 1.3)
+- Query:IP dialog being resizable (fixed in 1.3)
+- Player table shenanigans (fixed in 1.3)
+- Player time being displayed as 0:0:1 and not as 00:00:01 (fixed in 1.3)
+
 ## Planned features
-- Notifications (idk if i wanna do this one though)
+- Notifications
+- More actions in the system tray menu
 - Linux releases
