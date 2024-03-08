@@ -4,8 +4,8 @@
 ConfigMaster::ConfigMaster() {
 	fileCfg.setFileName(m_strConfigFile);
 	m_aColumnSizes[0] = 0;
-	m_aColumnSizes[1] = 20;
-	m_aColumnSizes[2] = 20;
+    m_aColumnSizes[1] = 24;
+    m_aColumnSizes[2] = 24;
 	m_aColumnSizes[3] = 230;
 	m_aColumnSizes[4] = 26;
 	m_aColumnSizes[5] = 26;

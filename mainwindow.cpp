@@ -15,10 +15,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    m_iconVAC.addFile(":/res/icon/secure.png");
+    m_iconPassworded.addFile(":/res/icon/passworded.png");
+
 	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
 	pTable->setColumnHidden(0, true);
-	pTable->setColumnWidth(1, 20);
-	pTable->setColumnWidth(2, 20);
+    pTable->setColumnWidth(1, 24);
+    pTable->setColumnWidth(2, 24);
 	pTable->setColumnWidth(3, 230);
 	pTable->setColumnWidth(4, 26);
 	pTable->setColumnWidth(5, 26);
@@ -335,12 +338,12 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 
 	pItemInternalID->setData(Qt::DisplayRole, pServer->m_iInternalID);
 	if(pServer->m_bPassworded)
-		pItemPassworded->setText(QString::number(pServer->m_bPassworded));
+        pItemPassworded->setIcon(m_iconPassworded);
 	else
 		pItemPassworded->setText("");
 
 	if(pServer->m_bVAC)
-		pItemVAC->setText(QString::number(pServer->m_bVAC));
+        pItemVAC->setIcon(m_iconVAC);
 	else
 		pItemVAC->setText("");
 	pItemHostname->setText(pServer->m_strName);
@@ -429,11 +432,11 @@ void MainWindow::OnServerUpdated(ServerInfo* pServer) {
 			}
 
 			if(pServer->m_bPassworded)
-				pPassworded->setText(QString::number(pServer->m_bPassworded));
+                pPassworded->setIcon(m_iconPassworded);
 			else
-				pPassworded->setText("");
+                pPassworded->setText("");
 			if(pServer->m_bVAC)
-				pVAC->setText(QString::number(pServer->m_bVAC));
+                pVAC->setIcon(m_iconVAC);
 			else
 				pVAC->setText("");
 			pName->setText(pServer->m_strName);
@@ -448,13 +451,14 @@ void MainWindow::OnServerUpdated(ServerInfo* pServer) {
 
 			if(!m_pPopulatedServer) {
 				m_pPopulatedServer = pServer;
-				UpdateConnectActions();
-			}
-			else {
+			} else {
 				if(pServer->m_iPlayers - pServer->m_iBots > m_pPopulatedServer->m_iPlayers - m_pPopulatedServer->m_iBots) {
 					m_pPopulatedServer = pServer;
-					UpdateConnectActions();
 				}
+			}
+
+			if(pServer == m_pPopulatedServer || !m_pPopulatedServer) {
+				UpdateConnectActions();
 			}
 
 			if(m_Config.m_bEnableNotifications && !m_bNotificationsOnCooldown) {

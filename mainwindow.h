@@ -141,6 +141,9 @@ private:
 
 	bool m_bNotificationsOnCooldown = false;
 
+    QIcon m_iconVAC;
+    QIcon m_iconPassworded;
+
 	ServerInfo* m_pPopulatedServer = nullptr;
 	void DisplayFilteredServers();
 	void ConnectToSelectedServer();

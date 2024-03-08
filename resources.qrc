@@ -9,5 +9,7 @@
         <file>icon/icon.ico</file>
         <file>icon/icon.png</file>
         <file>icon/biglogo.png</file>
+        <file>icon/passworded.png</file>
+        <file>icon/secure.png</file>
     </qresource>
 </RCC>
