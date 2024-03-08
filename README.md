@@ -3,7 +3,7 @@
 
 ![preview](https://github.com/TheRatest/of-server-browser/blob/master/icon/preview.png)
 
-## Features (v1.3):
+## Features (v1.31):
 - Viewing all the public servers that your connection can reach
 - Notifications
 - Caching servers
@@ -20,8 +20,7 @@
 - Hotkeys
 
 ## Downloading / installing
-Go to [releases](https://github.com/TheRatest/of-server-browser/releases/) and get the newest version available, unpack it in an empty folder somewhere and then run of-server-browser.exe  
-There's currently no linux support because i bricked my linux install and i don't feel like trying out cross-compling
+Go to [releases](https://github.com/TheRatest/of-server-browser/releases/) and get the newest version available, unpack it in an empty folder somewhere and then run of-server-browser.exe
 
 ## Compiling
 Open the CMakeLists.txt file with Qt Creator and... build the app!
@@ -36,6 +35,7 @@ Open the CMakeLists.txt file with Qt Creator and... build the app!
 - Query:IP dialog being resizable (fixed in 1.3)
 - Player table shenanigans (fixed in 1.3)
 - Player time being displayed as 0:0:1 and not as 00:00:01 (fixed in 1.3)
+- Connect to most populated server action not updating (fixed in 1.31)
 
 ## Planned features
-- Linux releases
+- None!
