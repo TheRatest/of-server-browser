@@ -1,15 +1,16 @@
-# of-server-browser, a game server browser for [Open Fortress](https://openfortress.fun) made with Qt
+# of-server-browser, a game server browser for [Open Fortress](https://openfortress.fun) (and other games!) made with Qt
 ![big logo mmm](https://github.com/TheRatest/of-server-browser/blob/master/icon/biglogo.png)
 
 ![preview](https://github.com/TheRatest/of-server-browser/blob/master/icon/preview.png)
 
-## Features (v1.31):
+## Features (v1.4):
 - Viewing all the public servers that your connection can reach
 - Notifications
 - Caching servers
 - System tray icon/menu
 - Auto-refresh
 - Filters
+- Custom game support
 - Favoriting & bookmarking servers
 - Viewing server details
 - Viewing the players (and sometimes the server convars)
@@ -20,7 +21,7 @@
 - Hotkeys
 
 ## Downloading / installing
-Go to [releases](https://github.com/TheRatest/of-server-browser/releases/) and get the newest version available, unpack it in an empty folder somewhere and then run of-server-browser.exe
+Go to [releases](https://github.com/TheRatest/of-server-browser/releases/) and get the newest version available, unpack it in an empty folder somewhere and then run the of-server-browser binary
 
 ## Compiling
 Open the CMakeLists.txt file with Qt Creator and... build the app!
