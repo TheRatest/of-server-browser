@@ -220,7 +220,7 @@ void QueryMaster::QueryMasterServer(QString strGameFolder) {
     sendPacket.append(m_strSeed.toStdString().c_str());
 	sendPacket.append('\0');
     sendPacket.append( "\\gamedir\\");
-    sendPacket.append(m_strGameFolder);
+    sendPacket.append(m_strGameFolder.toStdString().c_str());
 	sendPacket.append('\0');
 
 	int iBytesSent = m_hSocket->writeDatagram(sendPacket, m_hMasterAddress, HL2MASTER_PORT);

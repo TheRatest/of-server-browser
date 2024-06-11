@@ -69,8 +69,6 @@ public:
 	bool m_bReadyRules = false;
 	bool m_bReady = false;
 
-	bool IsOpenFortressServer();
-
 	void ParseInfoPacket(QByteArray rawData);
 	void ParsePlayersPacket(QByteArray rawData);
 	void ParseRulesPacket(QByteArray rawData);
