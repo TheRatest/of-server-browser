@@ -47,6 +47,8 @@ private slots:
 
 	void on_spinNotifCooldown_valueChanged(int arg1);
 
+    void on_inputGameFolder_textChanged(const QString &arg1);
+
 private:
 	Ui::OptionsDialog *ui;
 

@@ -89,6 +89,9 @@ void ConfigMaster::LoadConfig() {
 		m_flFullAutoRefreshInterval = ReadFloat(rawData, iCursor);
 		m_bNotificationFavoritesOnly = ReadInt8(rawData, iCursor);
 	}
+    if(m_iCfgVersion >= 8) {
+        m_strGameFolder = ReadString(rawData, iCursor);
+    }
 }
 
 void ConfigMaster::SaveConfig() {
@@ -144,6 +147,7 @@ void ConfigMaster::SaveConfig() {
 	WriteUInt8(rawData, m_bFullAutoRefreshServers);
 	WriteFloat(rawData, m_flFullAutoRefreshInterval);
 	WriteUInt8(rawData, m_bNotificationFavoritesOnly);
+    WriteString(rawData, m_strGameFolder);
 
 	fileCfg.open(QIODevice::WriteOnly);
 	fileCfg.write(rawData);

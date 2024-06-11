@@ -43,6 +43,8 @@ public:
 	short m_iBots = 0;
 	short m_iMaxPlayers = 0;
 	quint16 m_iPort = 0;
+    // can be different from the game port, is important for caching..
+    quint16 m_iQueryPort = 0;
 	bool m_bPassworded = false;
 	bool m_bVAC = false;
 	// extra data
@@ -95,7 +97,7 @@ public:
 
 	QueryMaster(QObject* pParent = nullptr);
 
-	void QueryMasterServer();
+    void QueryMasterServer(QString strGameFolder = "open_fortress");
 	void UpdateServers();
 	void UpdateServer(int);
 	void RemoveServer(int);
@@ -107,6 +109,8 @@ public:
 	ServerInfo* FindServerFromAddress(QHostAddress hAddr, quint16 iPort);
 
 	std::vector<ServerInfo*> m_aServers;
+
+    QString m_strGameFolder = "open_fortress";
 signals:
 	void ServerIsReady(ServerInfo*);
 	void ServerUpdated(ServerInfo*);
@@ -118,20 +122,20 @@ private:
 	// if the server list comes in multiple packets
 	QString m_strSeed = "0.0.0.0:0";
 	void SendInfoQuery(ServerInfo* pServer);
-	void SendPlayersQuery(ServerInfo* pServer);
-	void SendRulesQuery(ServerInfo* pServer);
-	void SendRulesQuery(ServerInfo* pServer, int iChallenge);
-	void SendInfoQuery(ServerInfo* pServer, int iChallenge);
-	void SendPlayersQuery(ServerInfo* pServer, int iChallenge);
+    void SendInfoQuery(ServerInfo* pServer, int iChallenge);
+    void SendRulesQuery(ServerInfo* pServer, int iChallenge = -1);
+    void SendPlayersQuery(ServerInfo* pServer, int iChallenge = -1);
 	QList<QHostAddress> m_aStoredMasterAddresses = QHostInfo::fromName(HL2MASTER_HOST).addresses();
 	quint16 m_iStoredAddressesIndex = 0;
 	QHostAddress m_hMasterAddress;
 	QUdpSocket* m_hSocket;
-	const quint32 m_iTimeoutThresholdMs = 600;
+    const quint32 m_iTimeoutThresholdMs = 1000;
 
 	bool m_bFinishedQueryingMaster = true;
 	// to decide which servers are faulty
 	bool m_bReceivedMasterPacket = true;
+
+    bool IsCorrectGameServer(ServerInfo*);
 
 	// for debugging purposes so that i dont get rate limited by the valve servers
 	const bool m_bLocalOnly = false;

@@ -1,6 +1,7 @@
 #include "optionsdialog.h"
 #include "ui_optionsdialog.h"
 #include "mainwindow.h"
+#include <QAction>
 #include <QFileDialog>
 
 OptionsDialog::OptionsDialog(QWidget *parent)
@@ -35,6 +36,7 @@ OptionsDialog::OptionsDialog(QWidget *parent)
 	QLabel* pLabelNotifThreshold = this->findChild<QLabel*>("labelNotifThreshold");
 	QLabel* pLabelNotifCooldown = this->findChild<QLabel*>("labelNotifCooldown");
 
+    QLineEdit* pInputGameFolder = this->findChild<QLineEdit*>("inputGameFolder");
 
 	pCheckUseSteamconnect->setCheckState(m_Config->m_bUseSteamConnectme ? Qt::Checked : Qt::Unchecked);
 	pCheckTray->setCheckState(m_Config->m_bUseTray ? Qt::Checked : Qt::Unchecked);
@@ -66,6 +68,8 @@ OptionsDialog::OptionsDialog(QWidget *parent)
 	pCheckNotifFavOnly->setEnabled(m_Config->m_bEnableNotifications);
 	pSpinNotifThreshold->setEnabled(m_Config->m_bEnableNotifications);
 	pSpinNotifCooldown->setEnabled(m_Config->m_bEnableNotifications);
+
+    pInputGameFolder->setText(m_Config->m_strGameFolder);
 }
 
 OptionsDialog::~OptionsDialog()
@@ -219,3 +223,9 @@ void OptionsDialog::on_spinNotifCooldown_valueChanged(int arg1)
 	m_Config->SaveConfig();
 }
 
+
+void OptionsDialog::on_inputGameFolder_textChanged(const QString &arg1)
+{
+    m_Config->m_strGameFolder = arg1;
+    m_Config->SaveConfig();
+}

@@ -14,7 +14,7 @@ class ConfigMaster : private DataReadWriter
 public:
 	ConfigMaster();
 
-	const char m_iNewestCfgVersion = 7;
+    const char m_iNewestCfgVersion = 8;
 	const QString m_strConfigFile = "config.cfg";
 
 	qint8 m_iCfgVersion = 0;
@@ -64,6 +64,8 @@ public:
 	bool m_bFullAutoRefreshServers = false;
 	float m_flFullAutoRefreshInterval = 120.0;
 	bool m_bNotificationFavoritesOnly = false;
+    // cfg 8
+    QString m_strGameFolder = "open_fortress";
 
 	void SaveConfig();
 	void LoadConfig();

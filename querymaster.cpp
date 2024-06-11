@@ -187,8 +187,8 @@ bool ServerInfo::QueueRulesPacket(QByteArray rawData) {
 	return false;
 }
 
-bool ServerInfo::IsOpenFortressServer() {
-	return (m_strGameFolder == "open_fortress");
+bool QueryMaster::IsCorrectGameServer(ServerInfo* pServer) {
+    return (pServer->m_strGameFolder == m_strGameFolder);
 }
 
 QueryMaster::QueryMaster(QObject* pParent) {
@@ -200,21 +200,27 @@ QueryMaster::QueryMaster(QObject* pParent) {
 	qDebug() << "Total master servers: " << m_aStoredMasterAddresses.size();
 }
 
-void QueryMaster::QueryMasterServer() {
+void QueryMaster::QueryMasterServer(QString strGameFolder) {
 	if(m_bLocalOnly) {
 		QueryLocalServer();
 		return;
 	}
 
-	m_hMasterAddress = m_aStoredMasterAddresses[m_iStoredAddressesIndex];
+    m_strGameFolder = strGameFolder;
+
+    if(m_aStoredMasterAddresses.size() == 0)
+        m_aStoredMasterAddresses.push_back(QHostAddress());
+
+    m_hMasterAddress = m_aStoredMasterAddresses[m_iStoredAddressesIndex];
 
 	m_bReceivedMasterPacket = false;
 	m_bFinishedQueryingMaster = false;
 	QByteArray sendPacket;
-	sendPacket.append("\x31\xFF"); //memcpy(sendPacket.begin(), "\x31\xFF", 2);
-	sendPacket.append(m_strSeed.toStdString().c_str()); //memcpy(sendPacket.begin() + 2, m_strSeed.toStdString().c_str(), m_strSeed.toStdString().length()+1);
+    sendPacket.append("\x31\xFF");
+    sendPacket.append(m_strSeed.toStdString().c_str());
 	sendPacket.append('\0');
-	sendPacket.append( "\\gamedir\\open_fortress"); //memcpy(sendPacket.begin() + m_strSeed.toStdString().length() + 2 + 1 + 1, "\\gamedir\\open_fortress", 23);
+    sendPacket.append( "\\gamedir\\");
+    sendPacket.append(m_strGameFolder);
 	sendPacket.append('\0');
 
 	int iBytesSent = m_hSocket->writeDatagram(sendPacket, m_hMasterAddress, HL2MASTER_PORT);
@@ -255,19 +261,22 @@ void QueryMaster::ReadPendingPackets() {
 		if(iBytesRead < 5 || recvPacket.size() < 5)
 			continue;
 
-		if(*reinterpret_cast<int*>(&recvPacket[0]) != -1 && *reinterpret_cast<int*>(&recvPacket[0]) != -2)
+        qint32 iPacketSignature = *(qint32*)recvPacket.begin();
+        if(iPacketSignature != -1 && iPacketSignature != -2)
 			continue;
 
 		ServerInfo* pServer = FindServerFromAddress(hAddrSender, iPort);
-		if(pServer == nullptr && recvPacket[4] != RESPONSE_SERVERS)
+        qint8 iPacketType = *(qint8*)(recvPacket.begin() + 4);
+        if(pServer == nullptr && iPacketType != RESPONSE_SERVERS)
 			continue;
 
-		if(*reinterpret_cast<int*>(&recvPacket[0]) == -2) {
+        if(iPacketSignature == -2) {
 			if(recvPacket.size() < 15)
 				continue;
 
 			//qDebug() << ": " << recvPacket.toHex(' ');
-			if(recvPacket[16] == RESPONSE_RULES && !pServer->m_bQueryingRules)
+            qint8 iMPPacketType = *(qint8*)(recvPacket.begin() + 16);
+            if(iMPPacketType == RESPONSE_RULES && !pServer->m_bQueryingRules)
 				pServer->m_bQueryingRules = true;
 
 			if(!pServer->m_bQueryingRules)
@@ -281,20 +290,20 @@ void QueryMaster::ReadPendingPackets() {
 			continue;
 		}
 
-		switch(recvPacket[4]) {
+        switch(iPacketType) {
 		case RESPONSE_CHALLENGE: {
 			if(m_aServers.size() == 0)
 				return;
 
-			quint32* iChallenge = reinterpret_cast<quint32*>(&recvPacket[5]);
+            quint32 iChallenge = *(quint32*)(recvPacket.begin() + 5);
 			if(!pServer->m_bReadyInfo)
-				SendInfoQuery(pServer, *iChallenge);
+                SendInfoQuery(pServer, iChallenge);
 
 			if(!pServer->m_bReadyPlayers)
-				SendPlayersQuery(pServer, *iChallenge);
+                SendPlayersQuery(pServer, iChallenge);
 
 			if(!pServer->m_bReadyRules && pServer->m_bQueryingRules)
-				SendRulesQuery(pServer, *iChallenge);
+                SendRulesQuery(pServer, iChallenge);
 
 			break;
 		}
@@ -314,16 +323,15 @@ void QueryMaster::ReadPendingPackets() {
 
 			bool bReadyBefore = pServer->m_bReady;
 			pServer->ParseInfoPacket(recvPacket);
-			pServer->m_bBogusServer = !pServer->IsOpenFortressServer();
+            pServer->m_bBogusServer = !IsCorrectGameServer(pServer);
 
 			if(pServer->m_bBogusServer) {
-				pServer->m_bBogusServer = true;
 				if(pServer->m_bCached) {
-					emit ServerNeedsRemoval(pServer);
+                    //emit ServerNeedsRemoval(pServer);
 				} else {
 					ClearServerList();
-					const int iRequeryDelayMs = 2000;
-					QTimer::singleShot(iRequeryDelayMs, this, &QueryMaster::QueryMasterServer);
+                    const int iRequeryDelayMs = 2000;
+                    QTimer::singleShot(iRequeryDelayMs, this, [=]()->void{QueryMaster::QueryMasterServer();});
 				}
 				return;
 			}
@@ -370,8 +378,7 @@ void QueryMaster::ReadPendingPackets() {
 		case RESPONSE_SERVERS: {
 			qDebug() << "Received server list";
 
-			if(!m_bReceivedMasterPacket)
-				m_bReceivedMasterPacket = true;
+            m_bReceivedMasterPacket = true;
 
 			if(m_bFinishedQueryingMaster)
 				continue;
@@ -400,7 +407,8 @@ void QueryMaster::ReadPendingPackets() {
 
 				ServerInfo* pServer = new ServerInfo;
 				pServer->m_hAddress = hAddrServer;
-				pServer->m_iPort = iPort;
+                pServer->m_iPort = iPort;
+                pServer->m_iQueryPort = iPort;
 				pServer->m_iInternalID = m_aServers.size();
 				pServer->m_timeQueryStart = std::chrono::system_clock::now();
 
@@ -411,11 +419,12 @@ void QueryMaster::ReadPendingPackets() {
 				//SendRulesQuery(pServer);
 
 				// another list of servers coming up ahead!
-				if(iCursor + sizeof(char) * 4 + sizeof(short) > recvPacket.size()) {
+                if(iCursor + sizeof(char) * 4 + sizeof(short) >= recvPacket.size()) {
 					m_strSeed = hAddrServer.toString();
 					m_strSeed.append(":");
 					m_strSeed.append(QString::number(iPort));
-					QueryMasterServer();
+                    qDebug() << "Re-querying";
+                    QueryMasterServer(m_strGameFolder);
 					break;
 				}
 			}
@@ -433,7 +442,7 @@ void QueryMaster::SendInfoQuery(ServerInfo* pServer) {
 	QByteArray sendPacket;
 	sendPacket.resize(25);
 	memcpy(sendPacket.begin(), "\xFF\xFF\xFF\xFF" "TSource Engine Query", 25);
-	quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iPort);
+    quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iQueryPort);
 	if(iBytesSent < 0) {
 		qDebug() << m_hSocket->error();
 		qDebug() << m_hSocket->errorString();
@@ -448,15 +457,11 @@ void QueryMaster::SendInfoQuery(ServerInfo* pServer, int iChallenge) {
 	sendPacket.resize(25+4);
 	memcpy(sendPacket.begin(), "\xFF\xFF\xFF\xFF" "TSource Engine Query", 25);
 	memcpy(sendPacket.begin() + 25, &iChallenge, 4);
-	quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iPort);
+    quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iQueryPort);
 	if(iBytesSent < 0) {
 		qDebug() << m_hSocket->error();
 		qDebug() << m_hSocket->errorString();
 	}
-}
-
-void QueryMaster::SendPlayersQuery(ServerInfo* pServer) {
-	QueryMaster::SendPlayersQuery(pServer, -1);
 }
 
 void QueryMaster::SendPlayersQuery(ServerInfo* pServer, int iChallenge) {
@@ -467,15 +472,11 @@ void QueryMaster::SendPlayersQuery(ServerInfo* pServer, int iChallenge) {
 	sendPacket.resize(5+4);
 	memcpy(sendPacket.begin(), "\xFF\xFF\xFF\xFF" "U", 5);
 	memcpy(sendPacket.begin() + 5, &iChallenge, 4);
-	quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iPort);
+    quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iQueryPort);
 	if(iBytesSent < 0) {
 		qDebug() << m_hSocket->error();
 		qDebug() << m_hSocket->errorString();
 	}
-}
-
-void QueryMaster::SendRulesQuery(ServerInfo* pServer) {
-	QueryMaster::SendRulesQuery(pServer, -1);
 }
 
 void QueryMaster::SendRulesQuery(ServerInfo* pServer, int iChallenge) {
@@ -484,9 +485,9 @@ void QueryMaster::SendRulesQuery(ServerInfo* pServer, int iChallenge) {
 
 	QByteArray sendPacket;
 	sendPacket.resize(5+4);
-	memcpy(sendPacket.begin(), "\xFF\xFF\xFF\xFF" "V", 5);
+    memcpy(sendPacket.begin(), "\xFF\xFF\xFF\xFF" "V", 5);
 	memcpy(sendPacket.begin() + 5, &iChallenge, 4);
-	quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iPort);
+    quint64 iBytesSent = m_hSocket->writeDatagram(sendPacket, pServer->m_hAddress, pServer->m_iQueryPort);
 	if(iBytesSent < 0) {
 		qDebug() << m_hSocket->error();
 		qDebug() << m_hSocket->errorString();
@@ -495,7 +496,7 @@ void QueryMaster::SendRulesQuery(ServerInfo* pServer, int iChallenge) {
 
 ServerInfo* QueryMaster::FindServerFromAddress(QHostAddress hAddr, quint16 iPort) {
 	for(auto it = m_aServers.begin(); it != m_aServers.end(); ++it) {
-		if((*it)->m_hAddress.toIPv4Address() == hAddr.toIPv4Address() && (*it)->m_iPort == iPort)
+        if((*it)->m_hAddress.toIPv4Address() == hAddr.toIPv4Address() && ((*it)->m_iPort == iPort || (*it)->m_iQueryPort == iPort))
 			return (*it);
 	}
 	return nullptr;
@@ -537,6 +538,7 @@ void QueryMaster::MakeFavoriteFromAddr(std::pair<quint32, quint16> addr) {
 	ServerInfo* pServer = new ServerInfo;
 	pServer->m_hAddress = QHostAddress(addr.first);
 	pServer->m_iPort = addr.second;
+    pServer->m_iQueryPort = pServer->m_iPort;
 	pServer->m_iInternalID = m_aServers.size();
 	pServer->m_timeQueryStart = std::chrono::system_clock::now();
 	pServer->m_bFavorited = true;
@@ -555,6 +557,7 @@ void QueryMaster::LoadCachedServer(std::pair<quint32, quint16> addr) {
 	ServerInfo* pServer = new ServerInfo;
 	pServer->m_hAddress = QHostAddress(addr.first);
 	pServer->m_iPort = addr.second;
+    pServer->m_iQueryPort = pServer->m_iPort;
 	pServer->m_iInternalID = m_aServers.size();
 	pServer->m_timeQueryStart = std::chrono::system_clock::now();
 	pServer->m_bCached = true;
@@ -577,6 +580,7 @@ void QueryMaster::QueryAddress(QHostAddress hAddress, quint16 iPort) {
 
 	pServer->m_hAddress = hAddress;
 	pServer->m_iPort = iPort;
+    pServer->m_iQueryPort = iPort;
 	pServer->m_iInternalID = m_aServers.size();
 	pServer->m_timeQueryStart = std::chrono::system_clock::now();
 	SendInfoQuery(pServer);
@@ -591,7 +595,7 @@ void QueryMaster::CheckForTimeouts() {
 		if((m_iStoredAddressesIndex) >= m_aStoredMasterAddresses.size())
 			m_iStoredAddressesIndex %= m_aStoredMasterAddresses.size();
 
-		QueryMasterServer();
+        QueryMasterServer(m_strGameFolder);
 	}
 }
 

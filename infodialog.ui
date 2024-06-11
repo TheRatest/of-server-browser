@@ -242,7 +242,7 @@
     <rect>
      <x>10</x>
      <y>210</y>
-     <width>271</width>
+     <width>371</width>
      <height>35</height>
     </rect>
    </property>
@@ -270,7 +270,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Version: 1.3 (probably final)</string>
+    <string>Version: 1.4</string>
    </property>
   </widget>
   <widget class="QLabel" name="label">

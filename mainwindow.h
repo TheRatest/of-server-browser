@@ -152,5 +152,7 @@ private:
 	void MakeNotification();
 	QString MakeConnectURL(ServerInfo* pServer, bool bSteamURLOnly = false);
 	QString MakeConnectURL(quint32 iAddr, quint16 iPort, bool bSteamURLOnly = false);
+
+    bool CheckInternetConnection();
 };
 #endif // MAINWINDOW_H

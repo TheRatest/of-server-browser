@@ -4,61 +4,61 @@
 DataReadWriter::DataReadWriter() {}
 
 qint8 DataReadWriter::ReadInt8(QByteArray& rawData, quint32& iCursor) {
-	qint8 iOut = *reinterpret_cast<qint8*>(&rawData[iCursor]);
+    qint8 iOut = *reinterpret_cast<qint8*>(rawData.begin() + iCursor);
 	iCursor += sizeof(qint8);
 	return iOut;
 }
 
 quint8 DataReadWriter::ReadUInt8(QByteArray& rawData, quint32& iCursor) {
-	quint8 iOut = *reinterpret_cast<quint8*>(&rawData[iCursor]);
+    quint8 iOut = *reinterpret_cast<quint8*>(rawData.begin() + iCursor);
 	iCursor += sizeof(quint8);
 	return iOut;
 }
 
 qint16 DataReadWriter::ReadInt16(QByteArray& rawData, quint32& iCursor) {
-	qint16 iOut = *reinterpret_cast<qint16*>(&rawData[iCursor]);
+    qint16 iOut = *reinterpret_cast<qint16*>(rawData.begin() + iCursor);
 	iCursor += sizeof(qint16);
 	return iOut;
 }
 
 quint16 DataReadWriter::ReadUInt16(QByteArray& rawData, quint32& iCursor) {
-	quint16 iOut = *reinterpret_cast<quint16*>(&rawData[iCursor]);
+    quint16 iOut = *reinterpret_cast<quint16*>(rawData.begin() + iCursor);
 	iCursor += sizeof(quint16);
 	return iOut;
 }
 
 qint32 DataReadWriter::ReadInt32(QByteArray& rawData, quint32& iCursor) {
-	qint32 iOut = *reinterpret_cast<qint32*>(&rawData[iCursor]);
+    qint32 iOut = *reinterpret_cast<qint32*>(rawData.begin() + iCursor);
 	iCursor += sizeof(qint32);
 	return iOut;
 }
 
 quint32 DataReadWriter::ReadUInt32(QByteArray& rawData, quint32& iCursor) {
-	quint32 iOut = *reinterpret_cast<quint32*>(&rawData[iCursor]);
+    quint32 iOut = *reinterpret_cast<quint32*>(rawData.begin() + iCursor);
 	iCursor += sizeof(quint32);
 	return iOut;
 }
 
 qint64 DataReadWriter::ReadInt64(QByteArray& rawData, quint32& iCursor) {
-	qint64 iOut = *reinterpret_cast<qint64*>(&rawData[iCursor]);
+    qint64 iOut = *reinterpret_cast<qint64*>(rawData.begin() + iCursor);
 	iCursor += sizeof(qint64);
 	return iOut;
 }
 
 quint64 DataReadWriter::ReadUInt64(QByteArray& rawData, quint32& iCursor) {
-	quint64 iOut = *reinterpret_cast<quint64*>(&rawData[iCursor]);
+    quint64 iOut = *reinterpret_cast<quint64*>(rawData.begin() + iCursor);
 	iCursor += sizeof(quint64);
 	return iOut;
 }
 
 float DataReadWriter::ReadFloat(QByteArray& rawData, quint32& iCursor) {
-	float iOut = *reinterpret_cast<float*>(&rawData[iCursor]);
+    float iOut = *reinterpret_cast<float*>(rawData.begin() + iCursor);
 	iCursor += sizeof(float);
 	return iOut;
 }
 
 QString DataReadWriter::ReadString(QByteArray& rawData, quint32& iCursor) {
-	QString strOut = QString::fromUtf8(reinterpret_cast<char*>(&rawData[iCursor]));
+    QString strOut = QString::fromUtf8(reinterpret_cast<char*>(rawData.begin() + iCursor));
 	std::string fuckYouUnicode = strOut.toStdString();
 	iCursor += fuckYouUnicode.size() + 1;
 	return strOut;

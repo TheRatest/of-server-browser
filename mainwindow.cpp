@@ -3,7 +3,7 @@
 #include "rulesdialog.h"
 #include "optionsdialog.h"
 #include "infodialog.h"
-#include "QueryIPDialog.h"
+#include "queryipdialog.h"
 #include <QDesktopServices>
 #include <QPushButton>
 #include <QResizeEvent>
@@ -49,12 +49,12 @@ MainWindow::MainWindow(QWidget *parent)
 		m_QueryMaster->MakeFavoriteFromAddr(*it);
 	}
 	if(m_Config.m_aCachedServers.size() == 0)
-		m_QueryMaster->QueryMasterServer();
+        m_QueryMaster->QueryMasterServer(m_Config.m_strGameFolder);
 
 	connect(pTable->horizontalHeader(), SIGNAL(sectionResized(int, int, int)), this, SLOT(OnServerListSectionResized(int, int, int)));
 
 	m_timerAutoRefresh.setInterval(m_Config.m_flAutoRefreshInterval * 1000.0);
-	m_timerFullAutoRefresh.setInterval(m_Config.m_flFullAutoRefreshInterval * 1000.0);
+    m_timerFullAutoRefresh.setInterval(m_Config.m_flFullAutoRefreshInterval * 1000.0);
 	m_timerNotificationsCooldown.setInterval(m_Config.m_iNotificationCooldownMin * 1000 * 60);
 
 	m_actTrayShow = new QAction;
@@ -133,6 +133,11 @@ void MainWindow::ApplyConfig() {
 	if(m_Config.m_bAutoRefreshServers)
 		pCheckAutoRefresh->setCheckState(Qt::Checked);
 
+    if(m_Config.m_bFullAutoRefreshServers) {
+        m_timerFullAutoRefresh.setInterval(m_Config.m_flFullAutoRefreshInterval*1000);
+        m_timerFullAutoRefresh.start();
+    }
+
 	pComboTags->setCurrentIndex(m_Config.m_bExcludeTags ? 1 : 0);
 	pSpinMaxLatency->setValue(m_Config.m_iMaxLatency);
 	pSpinGameVersion->setValue(m_Config.m_iGameVersion);
@@ -155,6 +160,8 @@ void MainWindow::ApplyConfig() {
 	this->resize(m_Config.m_iMainWindowWidth, m_Config.m_iMainWindowHeight);
 
 	UpdateConnectActions();
+
+    m_QueryMaster->m_strGameFolder = m_Config.m_strGameFolder;
 }
 
 MainWindow::~MainWindow()
@@ -251,21 +258,21 @@ void MainWindow::DisplayFilteredServers() {
 	pServerListLabel->setText(strServerList);
 
 
-	for(int i = 0; i < m_QueryMaster->m_aServers.size(); ++i) {
+    for(int i = 0; i < m_QueryMaster->m_aServers.size(); ++i) {
 		if(!m_QueryMaster->m_aServers[i]->m_bReady)
 			continue;
 
 		ServerInfo* pServer = m_QueryMaster->m_aServers[i];
 		QStringList astrFilterTags = m_Config.m_strFilterTags.split(",");
 
-		if(pServer->m_bBogusServer)
-			continue;
+        if(!pServer->m_bCached && m_Config.m_bEnableCaching) {
+            m_Config.m_aCachedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iQueryPort));
+            pServer->m_bCached = true;
+            m_Config.SaveConfig();
+        }
 
-		if(!pServer->m_bCached && m_Config.m_bEnableCaching) {
-			m_Config.m_aCachedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iPort));
-			pServer->m_bCached = true;
-			m_Config.SaveConfig();
-		}
+        if(pServer->m_bBogusServer || pServer->m_strGameFolder != m_Config.m_strGameFolder)
+			continue;
 
 		if(m_Config.m_bHideEmptyPlayers && pServer->m_iPlayers == 0)
 			continue;
@@ -380,20 +387,6 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 	pTable->setItem(pItemMap->row(), 8, pItemLatency);
 	pTable->setItem(pItemLatency->row(), 9, pItemTags);
 
-	/*
-	 * the item rows WILL change due to sorting, so the solution above works and this one does not
-	pTable->setItem(iRow, 0, pItemInternalID);
-	pTable->setItem(iRow, 1, pItemPassworded);
-	pTable->setItem(iRow, 2, pItemVAC);
-	pTable->setItem(iRow, 3, pItemHostname);
-	pTable->setItem(iRow, 4, pItemBots);
-	pTable->setItem(iRow, 5, pItemPlayers);
-	pTable->setItem(iRow, 6, pItemMaxPlayers);
-	pTable->setItem(iRow, 7, pItemMap);
-	pTable->setItem(iRow, 8, pItemLatency);
-	pTable->setItem(iRow, 9, pItemTags);
-	*/
-
 	if(!m_pPopulatedServer) {
 		m_pPopulatedServer = pServer;
 		UpdateConnectActions();
@@ -404,6 +397,12 @@ void MainWindow::OnServerReady(ServerInfo* pServer) {
 			UpdateConnectActions();
 		}
 	}
+
+    if(!pServer->m_bCached && m_Config.m_bEnableCaching) {
+        m_Config.m_aCachedServers.push_back(std::make_pair(pServer->m_hAddress.toIPv4Address(), pServer->m_iQueryPort));
+        pServer->m_bCached = true;
+        m_Config.SaveConfig();
+    }
 }
 
 void MainWindow::OnServerUpdated(ServerInfo* pServer) {
@@ -477,8 +476,6 @@ void MainWindow::OnServerUpdated(ServerInfo* pServer) {
 void MainWindow::on_buttonRefresh_clicked()
 {
 	this->findChild<QPushButton*>("buttonRefresh")->setEnabled(false);
-	QTableWidget* pTable = this->findChild<QTableWidget*>("tableServers");
-	//pTable->setSortingEnabled(false);
 	m_pPopulatedServer = nullptr;
 	m_QueryMaster->ClearServerList();
 	for(auto it = m_Config.m_aCachedServers.begin(); it != m_Config.m_aCachedServers.end(); ++it) {
@@ -487,7 +484,7 @@ void MainWindow::on_buttonRefresh_clicked()
 	for(auto it = m_Config.m_aFavoritedServers.begin(); it != m_Config.m_aFavoritedServers.end(); ++it) {
 		m_QueryMaster->MakeFavoriteFromAddr(*it);
 	}
-	m_QueryMaster->QueryMasterServer();
+    m_QueryMaster->QueryMasterServer(m_Config.m_strGameFolder);
 	DisplayFilteredServers();
 	QTimer::singleShot(1000, this, &MainWindow::DelayedRefreshButtonEanble);
 }
@@ -602,8 +599,8 @@ void MainWindow::on_tableServers_itemSelectionChanged()
 		pItemPlrDuration->setText(plr.DurationString());
 
 		pTablePlayers->setItem(i, 0, pItemPlrName);
-		pTablePlayers->setItem(i, 1, pItemPlrScore);
-		pTablePlayers->setItem(i, 2, pItemPlrDuration);
+        pTablePlayers->setItem(pItemPlrName->row(), 1, pItemPlrScore);
+        pTablePlayers->setItem(pItemPlrScore->row(), 2, pItemPlrDuration);
 	}
 
 	pOutConnectURL->setText(MakeConnectURL(pServer));
@@ -866,8 +863,9 @@ QString MainWindow::MakeConnectURL(quint32 iAddr, quint16 iPort, bool bSteamURLO
 
 void MainWindow::OnServerNeedsRemoval(ServerInfo* pServer) {
 	if(pServer == m_pPopulatedServer)
-		m_pPopulatedServer = nullptr;
-	if(pServer->m_bBogusServer && pServer->m_bCached) {
+        m_pPopulatedServer = nullptr;
+
+    if(pServer->m_bBogusServer && pServer->m_bCached) {
 		for(auto it = m_Config.m_aCachedServers.begin(); it != m_Config.m_aCachedServers.end(); ++it) {
 			if(it->first == pServer->m_hAddress.toIPv4Address() && it->second == pServer->m_iPort) {
 				m_Config.m_aCachedServers.erase(it);
